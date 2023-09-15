@@ -7,7 +7,7 @@ export function Placeholder(): JSX.Element {
       <SEO
         title='Degen Diaries'
         description='From breaking news and entertainment to sports and politics, get the full story with all the live commentary.'
-        image='/home.png'
+       
       />
       <i>
         <CustomIcon
