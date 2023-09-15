@@ -20,7 +20,11 @@
       "@components/*": ["components/*"],
       "@lib/*": ["lib/*"],
       "@styles/*": ["styles/*"]
-    }
+    },
+        "skipDefaultLibCheck": true,
+        "strictNullChecks": true
+    
+    
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
   "exclude": ["node_modules", "functions"]
