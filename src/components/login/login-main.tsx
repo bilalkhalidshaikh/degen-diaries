@@ -7,12 +7,56 @@ import web3Auth from '../../lib/context/web3-auth';
 import { useState } from 'react';
 import { Dialog } from '@headlessui/react';
 import { FaCheckCircle } from 'react-icons/fa'; // Import the success icon
-import { db } from './../../lib/context/firebaseAdmin'; // Update the path
+// import db from './../../lib/context/firebaseAdmin';
+import { getFirestore, collection, doc, setDoc } from 'firebase/firestore'; // Import Firebase Firestore functions
+import { initializeApp } from 'firebase/app';
 
 export function LoginMain(): JSX.Element {
   const { signInWithGoogle } = useAuth();
-  const { handleWeb3Registration, web3 } = useWeb3(); // Access the handleWeb3Registration function and web3 instance
+  const { web3, handleWeb3Registration } = useWeb3();
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+
+  const firebaseConfig = {
+    apiKey: 'AIzaSyD-ALyD7Xmm5ClCVYeU8OcDW0OVKU66m4w',
+    authDomain: 'twitter-web3.firebaseapp.com',
+    projectId: 'twitter-web3',
+    storageBucket: 'twitter-web3.appspot.com',
+    messagingSenderId: '925953423560',
+    appId: '1:925953423560:web:0c87f77ad6eb876d2d0dfd',
+    measurementId: 'G-NK1704HW5G'
+  };
+
+  // Initialize Firebase app
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  async function handleWeb3ButtonClick() {
+    try {
+      const { accounts, ethereum } = await web3Auth();
+
+      if (accounts.length === 0) {
+        console.error('MetaMask is not connected.');
+        return;
+      }
+
+      const userAddress = accounts[0];
+      console.log('Web3 accounts:', userAddress);
+
+      // Generate a referral code (6 characters for example)
+      const referralCode = generateRandomCode(6);
+
+      // Save the user's Ethereum address to the "userAddress" collection
+      const docRef = doc(db, 'userAddress', userAddress);
+      await setDoc(docRef, {
+        ethereumAddress: userAddress,
+        referralCode: referralCode
+      });
+
+      setIsSuccessModalOpen(true); // Show the success modal
+    } catch (error) {
+      console.error('Error connecting to MetaMask:', error);
+    }
+  }
 
   function generateRandomCode(length: number): string {
     const characters =
@@ -26,30 +70,6 @@ export function LoginMain(): JSX.Element {
 
     return code;
   }
-
-  const handleWeb3ButtonClick = async () => {
-    try {
-      const { accounts, ethereum } = await web3Auth();
-
-      if (accounts.length === 0) {
-        console.error('MetaMask is not connected.');
-        return;
-      }
-
-      const userAddress = accounts[0];
-      console.log('Web3 accounts:', userAddress);
-
-      // Store the user's Ethereum address in your database
-      // Replace 'userId' with the actual user ID
-      // await db.collection('users').doc('userId').update({
-      //   ethereumAddress: userAddress
-      // });
-
-      setIsSuccessModalOpen(true); // Show the success modal
-    } catch (error) {
-      console.error('Error connecting to MetaMask:', error.message);
-    }
-  };
 
   return (
     <main className='grid lg:grid-cols-[1fr,45vw]'>
