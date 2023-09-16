@@ -13,7 +13,7 @@ import { initializeApp } from 'firebase/app';
 
 export function LoginMain(): JSX.Element {
   const { signInWithGoogle } = useAuth();
-  const { web3, handleWeb3Registration } = useWeb3();
+  // const { web3, handleWeb3Registration } = useWeb3();
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
 
   const firebaseConfig = {
@@ -32,7 +32,7 @@ export function LoginMain(): JSX.Element {
 
   async function handleWeb3ButtonClick() {
     try {
-      const { accounts, ethereum } = await web3Auth();
+      const { accounts } = await web3Auth();
 
       if (accounts.length === 0) {
         console.error('MetaMask is not connected.');
