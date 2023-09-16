@@ -7,7 +7,7 @@
     "strict": false,
     "forceConsistentCasingInFileNames": true,
     "noEmit": true,
-    "noEmitOnError":false,
+    "noEmitOnError": false,
     "esModuleInterop": true,
     "module": "esnext",
     "moduleResolution": "node",
@@ -21,11 +21,14 @@
       "@lib/*": ["lib/*"],
       "@styles/*": ["styles/*"]
     },
-        "skipDefaultLibCheck": true,
-        "strictNullChecks": true
-    
-    
+    "skipDefaultLibCheck": true,
+    "strictNullChecks": true
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    "src/lib/context/web3-context.tsx"
+  ],
   "exclude": ["node_modules", "functions"]
 }

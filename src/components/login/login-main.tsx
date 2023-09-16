@@ -2,9 +2,54 @@ import { useAuth } from '@lib/context/auth-context';
 import { NextImage } from '@components/ui/next-image';
 import { CustomIcon } from '@components/ui/custom-icon';
 import { Button } from '@components/ui/button';
+import { useWeb3 } from '../../lib/context/web3-context';
+import web3Auth from '../../lib/context/web3-auth';
+import { useState } from 'react';
+import { Dialog } from '@headlessui/react';
+import { FaCheckCircle } from 'react-icons/fa'; // Import the success icon
+import { db } from './../../lib/context/firebaseAdmin'; // Update the path
 
 export function LoginMain(): JSX.Element {
   const { signInWithGoogle } = useAuth();
+  const { handleWeb3Registration, web3 } = useWeb3(); // Access the handleWeb3Registration function and web3 instance
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+
+  function generateRandomCode(length: number): string {
+    const characters =
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let code = '';
+
+    for (let i = 0; i < length; i++) {
+      const randomIndex = Math.floor(Math.random() * characters.length);
+      code += characters[randomIndex];
+    }
+
+    return code;
+  }
+
+  const handleWeb3ButtonClick = async () => {
+    try {
+      const { accounts, ethereum } = await web3Auth();
+
+      if (accounts.length === 0) {
+        console.error('MetaMask is not connected.');
+        return;
+      }
+
+      const userAddress = accounts[0];
+      console.log('Web3 accounts:', userAddress);
+
+      // Store the user's Ethereum address in your database
+      // Replace 'userId' with the actual user ID
+      await db.collection('users').doc('userId').update({
+        ethereumAddress: userAddress
+      });
+
+      setIsSuccessModalOpen(true); // Show the success modal
+    } catch (error) {
+      console.error('Error connecting to MetaMask:', error.message);
+    }
+  };
 
   return (
     <main className='grid lg:grid-cols-[1fr,45vw]'>
@@ -16,7 +61,6 @@ export function LoginMain(): JSX.Element {
           alt='Twitter banner'
           layout='fill'
           useSkeleton
-        
         />
         <i className='absolute'>
           <CustomIcon className='h-96 w-96 text-white' iconName='TwitterIcon' />
@@ -46,7 +90,7 @@ export function LoginMain(): JSX.Element {
                          dark:hover:brightness-90 dark:focus-visible:brightness-90 dark:active:brightness-75'
               onClick={signInWithGoogle}
             >
-              <CustomIcon iconName='GoogleIcon' /> 
+              <CustomIcon iconName='GoogleIcon' />
               {/* Sign up with Google */}
               Register with Google
             </Button>
@@ -68,10 +112,12 @@ export function LoginMain(): JSX.Element {
             >
               Sign up with phone or email
             </Button> */}
+
             <Button
-              className='flex cursor-not-allowed justify-center gap-2 border border-light-line-reply font-bold text-light-primary
-                         transition hover:bg-[#e6e6e6] focus-visible:bg-[#e6e6e6] active:bg-[#cccccc] dark:border-0
-                         dark:bg-white dark:hover:brightness-90 dark:focus-visible:brightness-90 dark:active:brightness-75'
+              className='flex cursor-pointer justify-center gap-2 border border-light-line-reply font-bold text-light-primary transition
+                 hover:bg-[#e6e6e6] focus-visible:bg-[#e6e6e6] active:bg-[#cccccc] dark:border-0 dark:bg-white
+                 dark:hover:brightness-90 dark:focus-visible:brightness-90 dark:active:brightness-75'
+              onClick={handleWeb3ButtonClick} // Call handleWeb3ButtonClick when clicked
             >
               <CustomIcon iconName='MetaMaskIcon' /> Register with Web3.0
             </Button>
@@ -119,6 +165,35 @@ export function LoginMain(): JSX.Element {
           </div>
         </div>
       </div>
+
+      {/* Success Modal */}
+      {/* Success Modal */}
+      <Dialog
+        open={isSuccessModalOpen}
+        onClose={() => setIsSuccessModalOpen(false)}
+        as='div'
+        className='fixed inset-0 z-50 flex items-center justify-center'
+      >
+        <div className='w-full max-w-md rounded-lg bg-white p-8'>
+          <div className='text-center'>
+            <FaCheckCircle className='mb-4 text-6xl text-green-500' />
+            <h3 className='mb-2 text-lg font-bold text-green-500 '>
+              Wallet Connected Successfully!
+            </h3>
+            <p className='text-green-500 '>
+              Your wallet has been successfully connected.
+            </p>
+          </div>
+          <div className='mt-4 text-center'>
+            <Button
+              onClick={() => setIsSuccessModalOpen(false)}
+              className='text-black'
+            >
+              Close
+            </Button>
+          </div>
+        </div>
+      </Dialog>
     </main>
   );
 }

@@ -6,6 +6,7 @@ import { AppHead } from '@components/common/app-head';
 import type { ReactElement, ReactNode } from 'react';
 import type { NextPage } from 'next';
 import type { AppProps } from 'next/app';
+import { Web3Provider } from './../lib/context/web3-context';
 
 type NextPageWithLayout = NextPage & {
   getLayout?: (page: ReactElement) => ReactNode;
@@ -26,7 +27,7 @@ export default function App({
       <AppHead />
       <AuthContextProvider>
         <ThemeContextProvider>
-          {getLayout(<Component {...pageProps} />)}
+          <Web3Provider>{getLayout(<Component {...pageProps} />)}</Web3Provider>
         </ThemeContextProvider>
       </AuthContextProvider>
     </>
