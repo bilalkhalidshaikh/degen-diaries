@@ -41,9 +41,9 @@ export function LoginMain(): JSX.Element {
 
       // Store the user's Ethereum address in your database
       // Replace 'userId' with the actual user ID
-      await db.collection('users').doc('userId').update({
-        ethereumAddress: userAddress
-      });
+      // await db.collection('users').doc('userId').update({
+      //   ethereumAddress: userAddress
+      // });
 
       setIsSuccessModalOpen(true); // Show the success modal
     } catch (error) {
