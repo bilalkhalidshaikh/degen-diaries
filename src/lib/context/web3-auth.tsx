@@ -2,6 +2,11 @@
 
 import Web3 from 'web3';
 
+declare global {
+  interface Window {
+    ethereum?: any; // or typeof ethereum
+  }
+}
 const web3Auth = async (): Promise<{ accounts: string[] }> => {
   // Check if Web3 is injected by MetaMask
   if (typeof window !== 'undefined' && typeof window.ethereum !== 'undefined') {
