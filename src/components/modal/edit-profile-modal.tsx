@@ -68,7 +68,7 @@ export function EditProfileModal({
             <ToolTip tip='Reset' />
           </Button>
           <Button
-            className='bg-light-primary py-1 px-4 font-bold text-white focus-visible:bg-light-primary/90 
+            className='bg-light-primary px-4 py-1 font-bold text-white focus-visible:bg-light-primary/90 
                        enabled:hover:bg-light-primary/90 enabled:active:bg-light-primary/80 disabled:brightness-75
                        dark:bg-light-border dark:text-light-primary dark:focus-visible:bg-light-border/90
                        dark:enabled:hover:bg-light-border/90 dark:enabled:active:bg-light-border/75'
@@ -107,7 +107,7 @@ export function EditProfileModal({
           ) : (
             <div className='h-full bg-light-line-reply dark:bg-dark-line-reply' />
           )}
-          <div className='absolute left-1/2 top-1/2 flex -translate-y-1/2 -translate-x-1/2 gap-4'>
+          <div className='absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 gap-4'>
             <Button
               className='group/inner relative bg-light-primary/60 p-2 hover:bg-image-preview-hover/50
                          focus-visible:bg-image-preview-hover/50'
@@ -171,7 +171,7 @@ export function EditProfileModal({
             </div>
           </div>
           {children}
-          <Button
+          {/* <Button
             className='accent-tab -mx-4 mb-4 flex cursor-not-allowed items-center justify-between rounded-none
                        py-2 hover:bg-light-primary/10 active:bg-light-primary/20 disabled:brightness-100
                        dark:hover:bg-dark-primary/10 dark:active:bg-dark-primary/20'
@@ -183,7 +183,7 @@ export function EditProfileModal({
                 iconName='ChevronRightIcon'
               />
             </i>
-          </Button>
+          </Button> */}
         </div>
       </section>
     </>

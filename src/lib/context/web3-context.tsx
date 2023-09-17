@@ -1,13 +1,12 @@
-// web3-context.tsx
-
 import {
-  createContext,
-  useState,
   useEffect,
-  ReactNode,
-  useContext
+  useState,
+  createContext,
+  useContext,
+  ReactNode
 } from 'react';
 import Web3 from 'web3';
+import WalletConnectProvider from '@walletconnect/web3-provider';
 
 interface Web3ContextProps {
   web3: Web3 | null;
@@ -25,40 +24,48 @@ interface Web3ProviderProps {
 
 const Web3Provider: React.FC<Web3ProviderProps> = ({ children }) => {
   const [web3, setWeb3] = useState<Web3 | null>(null);
+  const [isConnecting, setIsConnecting] = useState(false);
 
-  useEffect(() => {
-    const connectWeb3 = async () => {
-      if ((window as any).ethereum) {
-        const _web3 = new Web3((window as any).ethereum);
-        try {
-          await (window as any).ethereum.enable();
-          setWeb3(_web3);
-        } catch (error) {
-          console.error('Error connecting to MetaMask:', error.message);
+  const connectWeb3 = async () => {
+    setIsConnecting(true);
+
+    try {
+      const provider = new WalletConnectProvider({
+        rpc: {
+          1: 'https://mainnet.eth.aragon.network'
+          // Add more networks if needed
         }
-      } else {
-        console.log('MetaMask not detected. Install or enable it.');
-      }
-    };
-    connectWeb3();
-  }, []);
+      });
+
+      await provider.enable();
+      const _web3 = new Web3(provider);
+      setWeb3(_web3);
+    } catch (error) {
+      console.error('Error connecting to WalletConnect:', error.message);
+    } finally {
+      setIsConnecting(false);
+    }
+  };
 
   const handleWeb3Registration = async () => {
+    if (!web3) {
+      console.error('Web3 instance is not available.');
+      return;
+    }
+
     try {
-      if (web3) {
-        const accounts = await web3.eth.getAccounts();
-        console.log('Web3 accounts:', accounts);
-        // Here you can use the accounts obtained from Web3 registration
-      } else {
-        console.error('Web3 instance is not available.');
-      }
+      const accounts = await web3.eth.getAccounts();
+      console.log('Web3 accounts:', accounts);
+      // Here you can use the accounts obtained from Web3 registration
     } catch (error) {
-      console.error('Error connecting to MetaMask:', error.message);
+      console.error('Error getting accounts:', error.message);
     }
   };
 
   return (
-    <Web3Context.Provider value={{ web3, handleWeb3Registration }}>
+    <Web3Context.Provider
+      value={{ web3, handleWeb3Registration, connectWeb3, isConnecting }}
+    >
       {children}
     </Web3Context.Provider>
   );
