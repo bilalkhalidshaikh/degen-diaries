@@ -53,7 +53,7 @@ export function UserDetails({
   const { address, connector, isConnected } = useAccount();
 
   useEffect(() => {
-    setWeb3Address(address);
+    setWeb3Address(address || '');
   }, [address]);
 
   return (
