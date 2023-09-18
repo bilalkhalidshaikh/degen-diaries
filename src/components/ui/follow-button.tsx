@@ -1,4 +1,5 @@
-import { useAuth } from '@lib/context/auth-context';
+// import { useAuth } from '@lib/context/auth-context';
+import { useAuth } from '@lib/context/web3-auth-context';
 import { useModal } from '@lib/hooks/useModal';
 import { manageFollow } from '@lib/firebase/utils';
 import { preventBubbling } from '@lib/utils';

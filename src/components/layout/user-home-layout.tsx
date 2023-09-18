@@ -1,6 +1,7 @@
 import { useRouter } from 'next/router';
 import { motion } from 'framer-motion';
-import { useAuth } from '@lib/context/auth-context';
+// import { useAuth } from '@lib/context/auth-context';
+import { useAuth } from '@lib/context/web3-auth-context';
 import { useUser } from '@lib/context/user-context';
 import { SEO } from '@components/common/seo';
 import { UserHomeCover } from '@components/user/user-home-cover';

@@ -54,12 +54,12 @@ export function MoreSettings(): JSX.Element {
             <AnimatePresence>
               {open && (
                 <Menu.Items
-                  className='menu-container absolute -top-44 w-60 font-medium xl:w-11/12'
+                  className='menu-container top-19 absolute w-60 font-medium xl:w-11/12'
                   as={motion.div}
                   {...variants}
                   static
                 >
-                  <Menu.Item>
+                  {/* <Menu.Item>
                     {({ active }): JSX.Element => (
                       <MenuLink
                         className={cn(
@@ -88,7 +88,7 @@ export function MoreSettings(): JSX.Element {
                         Help center
                       </MenuLink>
                     )}
-                  </Menu.Item>
+                  </Menu.Item> */}
                   <Menu.Item>
                     {({ active }): JSX.Element => (
                       <Button
@@ -99,7 +99,7 @@ export function MoreSettings(): JSX.Element {
                         onClick={openModal}
                       >
                         <HeroIcon iconName='PaintBrushIcon' />
-                        Display
+                        Theme
                       </Button>
                     )}
                   </Menu.Item>

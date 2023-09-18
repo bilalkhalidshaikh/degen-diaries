@@ -230,21 +230,59 @@
 //   );
 // }
 
-import { useAuth } from '@lib/context/auth-context';
+// import { useAuth } from '@lib/context/auth-context';
+
+import { useAuth } from '@lib/context/web3-auth-context';
 import { NextImage } from '@components/ui/next-image';
 import { CustomIcon } from '@components/ui/custom-icon';
 import { Button } from '@components/ui/button';
 import { useWeb3 } from '../../lib/context/web3-context';
 import web3Auth from '../../lib/context/web3Auth';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog } from '@headlessui/react';
 import { FaCheckCircle } from 'react-icons/fa'; // Import the success icon
 import { useWeb3Modal } from '@web3modal/react';
+import {
+  useAccount,
+  useConnect,
+  useDisconnect,
+  useEnsAvatar,
+  useEnsName
+} from 'wagmi';
 
 export function LoginMain(): JSX.Element {
-  const { signInWithGoogle } = useAuth();
+  // const { signInWithGoogle } = useAuth();
+  const { connectWithWallet } = useAuth();
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const { open, close } = useWeb3Modal();
+  const { address, connector, isConnected } = useAccount();
+  const { data: ensAvatar } = useEnsAvatar({ address });
+  const { data: ensName } = useEnsName({ address });
+  const { connect, connectors, error, isLoading, pendingConnector } =
+    useConnect();
+  const { disconnect } = useDisconnect();
+  const [web3Address, setWeb3Address] = useState('');
+
+  const handleConnect = async () => {
+    open();
+  };
+
+  useEffect(() => {
+    setWeb3Address(address);
+  }, [address]);
+
+  // useEffect(() => {
+  //   let timer;
+  //   if (isConnected) {
+  //     timer = setTimeout(() => {
+  //       setIsSuccessModalOpen(true);
+  //     }, 5000);
+  //   }
+
+  //   return () => {
+  //     clearTimeout(timer); // Clear the timer if the component unmounts or if isConnected becomes false
+  //   };
+  // }, [isConnected]);
 
   return (
     <main
@@ -271,19 +309,23 @@ export function LoginMain(): JSX.Element {
           <div className='grid gap-3 font-bold'>
             <Button
               className='flex justify-center gap-2 border border-light-line-reply font-bold text-light-primary transition hover:bg-[#e6e6e6] focus-visible:bg-[#e6e6e6] active:bg-[#cccccc] dark:border-0 dark:bg-white dark:hover:brightness-90 dark:focus-visible:brightness-90 dark:active:brightness-75'
-              onClick={signInWithGoogle}
+              // onClick={signInWithGoogle}
             >
               <CustomIcon iconName='GoogleIcon' />
               Register with Google
             </Button>
+
             <div className='flex flex-col gap-3'>
               <i className='border-b border-light-border dark:border-dark-border' />
               <p>or</p>
+              {web3Address && <p>Connected Wallet Address: {web3Address}</p>}
+
               <i className='border-b border-light-border dark:border-dark-border' />
             </div>
             <Button
               className='flex cursor-pointer justify-center gap-2 border border-light-line-reply font-bold text-light-primary transition hover:bg-[#e6e6e6] focus-visible:bg-[#e6e6e6] active:bg-[#cccccc] dark:border-0 dark:bg-white dark:hover:brightness-90 dark:focus-visible:brightness-90 dark:active:brightness-75'
-              onClick={() => open()}
+              // onClick={handleConnect} // Use the event handler here
+              onClick={connectWithWallet} // Use the event handler here
             >
               <CustomIcon iconName='MetaMaskIcon' /> Register with Web3.0
             </Button>
@@ -319,7 +361,7 @@ export function LoginMain(): JSX.Element {
             <p className='font-bold'>Already have an account? </p>
             <Button
               className='border border-light-line-reply font-bold text-accent-blue hover:bg-accent-blue/10 focus-visible:bg-accent-blue/10 focus-visible:!ring-accent-blue/80 active:bg-accent-blue/20 dark:border-light-secondary'
-              onClick={signInWithGoogle}
+              // onClick={signInWithGoogle}
             >
               Sign in
             </Button>
@@ -338,10 +380,21 @@ export function LoginMain(): JSX.Element {
           <div className='text-center'>
             <FaCheckCircle className='mb-4 text-6xl text-green-500' />
             <h3 className='mb-2 text-lg font-bold text-green-500'>
-              Wallet Connected Successfully!
+              {isConnected
+                ? `Wallet is Already connected to ${
+                    connector && connector?.name
+                  }`
+                : 'Wallet Connected Successfully!'}
             </h3>
             <p className='text-green-500'>
               Your wallet has been successfully connected.
+            </p>
+            <p className='text-green-500'>
+              Wallet Address .{' '}
+              <span>{ensName ? `${ensName} (${address})` : address}</span>
+            </p>
+            <p className='text-green-500'>
+              <span>Connected to {connector && connector?.name}</span>
             </p>
           </div>
           <div className='mt-4 text-center'>
@@ -350,6 +403,9 @@ export function LoginMain(): JSX.Element {
               className='text-black'
             >
               Close
+            </Button>
+            <Button onClick={disconnect} className='text-black'>
+              Disconnect
             </Button>
           </div>
         </div>

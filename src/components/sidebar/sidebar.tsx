@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { useAuth } from '@lib/context/auth-context';
+// import { useAuth } from '@lib/context/auth-context';
+import { useAuth } from '@lib/context/web3-auth-context';
 import { useWindow } from '@lib/context/window-context';
 import { useModal } from '@lib/hooks/useModal';
 import { Modal } from '@components/modal/modal';
@@ -10,6 +11,7 @@ import { SidebarLink } from './sidebar-link';
 import { MoreSettings } from './more-settings';
 import { SidebarProfile } from './sidebar-profile';
 import type { IconName } from '@components/ui/hero-icon';
+import { useAccount } from 'wagmi';
 
 export type NavLink = {
   href: string;
@@ -25,13 +27,13 @@ const navLinks: Readonly<NavLink[]> = [
     linkName: 'Home',
     iconName: 'HomeIcon'
   },
-  {
-    href: '/explore',
-    linkName: 'Explore',
-    iconName: 'HashtagIcon',
-    // disabled: true,
-    canBeHidden: true
-  },
+  // {
+  //   href: '/explore',
+  //   linkName: 'Explore',
+  //   iconName: 'HashtagIcon',
+  //   // disabled: true,
+  //   canBeHidden: true
+  // },
   // {
   //   href: '/notifications',
   //   linkName: 'Notifications',

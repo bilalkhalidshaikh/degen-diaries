@@ -2,7 +2,8 @@
 
 import { useState, useEffect, createContext, useContext } from 'react';
 import { updateUserTheme } from '@lib/firebase/utils';
-import { useAuth } from './auth-context';
+// import { useAuth } from './auth-context';
+import { useAuth } from './web3-auth-context';
 import type { ReactNode, ChangeEvent } from 'react';
 import type { Theme, Accent } from '@lib/types/theme';
 

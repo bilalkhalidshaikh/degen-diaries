@@ -1,6 +1,7 @@
 import '@styles/globals.scss';
 
-import { AuthContextProvider } from '@lib/context/auth-context';
+// import { AuthContextProvider } from '@lib/context/auth-context';
+import { AuthContextProvider } from '@lib/context/web3-auth-context';
 import { ThemeContextProvider } from '@lib/context/theme-context';
 import { AppHead } from '@components/common/app-head';
 import type { ReactElement, ReactNode } from 'react';
@@ -45,6 +46,8 @@ export default function App({
       <AppHead />
       <WagmiConfig config={wagmiConfig}>
         <AuthContextProvider>
+          {' '}
+          {/* Ensure AuthContextProvider is here */}
           <ThemeContextProvider>
             {getLayout(<Component {...pageProps} />)}
           </ThemeContextProvider>

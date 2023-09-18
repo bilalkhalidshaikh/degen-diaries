@@ -1,7 +1,8 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { Menu } from '@headlessui/react';
 import cn from 'clsx';
-import { useAuth } from '@lib/context/auth-context';
+// import { useAuth } from '@lib/context/auth-context';
+import { useAuth } from '@lib/context/web3-auth-context';
 import { useModal } from '@lib/hooks/useModal';
 import { Modal } from '@components/modal/modal';
 import { ActionModal } from '@components/modal/action-modal';
@@ -63,7 +64,7 @@ export function SidebarProfile(): JSX.Element {
             <AnimatePresence>
               {open && (
                 <Menu.Items
-                  className='menu-container absolute left-0 right-0 -top-36 w-60 xl:w-full'
+                  className='menu-container absolute -top-36 left-0 right-0 w-60 xl:w-full'
                   as={motion.div}
                   {...variants}
                   static

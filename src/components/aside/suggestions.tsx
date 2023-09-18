@@ -8,7 +8,8 @@ import {
   orderBy,
   documentId
 } from 'firebase/firestore';
-import { useAuth } from '@lib/context/auth-context';
+// import { useAuth } from '@lib/context/auth-context';
+import { useAuth } from '@lib/context/web3-auth-context';
 import { useCollection } from '@lib/hooks/useCollection';
 import { useDocument } from '@lib/hooks/useDocument';
 import { usersCollection } from '@lib/firebase/collections';

@@ -16,7 +16,7 @@ export function AsideFooter(): JSX.Element {
                  text-light-secondary dark:text-dark-secondary'
     >
       <nav className='flex flex-wrap justify-center gap-2'>
-        {footerLinks.map(([linkName, href]) => (
+        {/* {footerLinks.map(([linkName, href]) => (
           <a
             className='custom-underline'
             target='_blank'
@@ -26,9 +26,9 @@ export function AsideFooter(): JSX.Element {
           >
             {linkName}
           </a>
-        ))}
+        ))} */}
       </nav>
-      <p>© 2023 Degen Diaries, Inc.</p>
+      <p>© 2023 Degen Diaries.</p>
     </footer>
   );
 }

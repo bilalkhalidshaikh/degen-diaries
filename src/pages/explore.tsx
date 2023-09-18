@@ -2,7 +2,8 @@ import { useMemo } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { toast } from 'react-hot-toast';
 import { orderBy, query } from 'firebase/firestore';
-import { useAuth } from '@lib/context/auth-context';
+import { useAuth } from '@lib/context/web3-auth-context';
+// import { useAuth } from '@lib/context/auth-context';
 import { useModal } from '@lib/hooks/useModal';
 import { useCollection } from '@lib/hooks/useCollection';
 import { useArrayDocument } from '@lib/hooks/useArrayDocument';
@@ -94,11 +95,11 @@ export default function Explore(): JSX.Element {
         </Button>
       </MainHeader>
       <section className='mt-0.5'>
-      <StatsEmpty
-            title='Nothing to see here for now'
-            description="Don’t let the good ones fly away! Explore Tweets to enjoy and updated about what’s happening."
-            // imageData={{ src: '/assets/no-bookmarks.png', alt: 'No bookmarks' }}
-          />
+        <StatsEmpty
+          title='Nothing to see here for now'
+          description='Don’t let the good ones fly away! Explore Tweets to enjoy and updated about what’s happening.'
+          // imageData={{ src: '/assets/no-bookmarks.png', alt: 'No bookmarks' }}
+        />
       </section>
     </MainContainer>
   );

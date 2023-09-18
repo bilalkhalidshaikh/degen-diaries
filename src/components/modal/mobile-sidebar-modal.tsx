@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { useAuth } from '@lib/context/auth-context';
+// import { useAuth } from '@lib/context/auth-context';
+import { useAuth } from '@lib/context/web3-auth-context';
 import { useModal } from '@lib/hooks/useModal';
 import { Button } from '@components/ui/button';
 import { UserAvatar } from '@components/user/user-avatar';
@@ -151,11 +152,11 @@ export function MobileSidebarModal({
             )}
           </a>
         </Link>
-        <div className='mb-8 ml-2 -mt-4'>
+        <div className='-mt-4 mb-8 ml-2'>
           <UserAvatar
             className='absolute -translate-y-1/2 bg-main-background p-1 hover:brightness-100
-                       [&>figure>span]:[transition:200ms]
-                       [&:hover>figure>span]:brightness-75'
+                       [&:hover>figure>span]:brightness-75
+                       [&>figure>span]:[transition:200ms]'
             username={username}
             src={photoURL}
             alt={name}
@@ -211,7 +212,7 @@ export function MobileSidebarModal({
               onClick={displayOpenModal}
             >
               <HeroIcon className='h-5 w-5' iconName='PaintBrushIcon' />
-              Display
+              Theme
             </Button>
             <Button
               className='accent-tab accent-bg-tab flex items-center gap-2 rounded-md p-1.5 font-bold transition

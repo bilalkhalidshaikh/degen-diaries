@@ -11,7 +11,8 @@ import {
   manageTotalTweets,
   manageTotalPhotos
 } from '@lib/firebase/utils';
-import { useAuth } from '@lib/context/auth-context';
+// import { useAuth } from '@lib/context/auth-context';
+import { useAuth } from '@lib/context/web3-auth-context';
 import { sleep } from '@lib/utils';
 import { getImagesData } from '@lib/validation';
 import { UserAvatar } from '@components/user/user-avatar';
@@ -214,7 +215,7 @@ export function Input({
       {children}
       {reply && visited && (
         <motion.p
-          className='ml-[75px] -mb-2 mt-2 text-light-secondary dark:text-dark-secondary'
+          className='-mb-2 ml-[75px] mt-2 text-light-secondary dark:text-dark-secondary'
           {...fromTop}
         >
           Replying to{' '}
@@ -229,7 +230,7 @@ export function Input({
         className={cn(
           'hover-animation grid w-full grid-cols-[auto,1fr] gap-3 px-4 py-3',
           reply
-            ? 'pt-3 pb-1'
+            ? 'pb-1 pt-3'
             : replyModal
             ? 'pt-0'
             : 'border-b-2 border-light-border dark:border-dark-border',

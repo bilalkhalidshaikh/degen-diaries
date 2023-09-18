@@ -3,6 +3,7 @@ import type { Timestamp, FirestoreDataConverter } from 'firebase/firestore';
 
 export type User = {
   id: string;
+  walletAddress: string;
   bio: string | null;
   name: string;
   theme: Theme | null;

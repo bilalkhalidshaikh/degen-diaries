@@ -6,6 +6,14 @@ import { UserFollowing } from './user-following';
 import { UserFollowStats } from './user-follow-stats';
 import type { IconName } from '@components/ui/hero-icon';
 import type { User } from '@lib/types/user';
+import { useState, useEffect } from 'react';
+import {
+  useAccount,
+  useConnect,
+  useDisconnect,
+  useEnsAvatar,
+  useEnsName
+} from 'wagmi';
 
 type UserDetailsProps = Pick<
   User,
@@ -41,6 +49,13 @@ export function UserDetails({
     [`Joined ${formatDate(createdAt, 'joined')}`, 'CalendarDaysIcon']
   ];
 
+  const [web3Address, setWeb3Address] = useState('');
+  const { address, connector, isConnected } = useAccount();
+
+  useEffect(() => {
+    setWeb3Address(address);
+  }, [address]);
+
   return (
     <>
       <div>
@@ -56,6 +71,10 @@ export function UserDetails({
         </div>
       </div>
       <div className='flex flex-col gap-2'>
+        <p className='whitespace-pre-line break-words'>
+          {' '}
+          {web3Address && <p>Connected Wallet Address: {web3Address}</p>}
+        </p>
         {bio && <p className='whitespace-pre-line break-words'>{bio}</p>}
         <div className='flex flex-wrap gap-x-3 gap-y-1 text-light-secondary dark:text-dark-secondary'>
           {detailIcons.map(

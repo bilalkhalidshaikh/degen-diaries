@@ -7,6 +7,14 @@ const nextConfig = {
   },
   eslint: {
     ignoreDuringBuilds: true
+  },
+  images: {
+    domains: [
+      'source.boringavatars.com',
+      'encrypted-tbn0.gstatic.com',
+      'lh3.googleusercontent.com',
+      'firebasestorage.googleapis.com'
+    ]
   }
 };
 
