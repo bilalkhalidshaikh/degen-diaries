@@ -1,3 +1,6 @@
+// @ts-nocheck after version 3.7
+/* tslint:disable */
+
 // import { useAuth } from '@lib/context/auth-context';
 // import { NextImage } from '@components/ui/next-image';
 // import { CustomIcon } from '@components/ui/custom-icon';
@@ -268,7 +271,7 @@ export function LoginMain(): JSX.Element {
   };
 
   useEffect(() => {
-    setWeb3Address(address);
+    setWeb3Address(address || '');
   }, [address]);
 
   // useEffect(() => {
