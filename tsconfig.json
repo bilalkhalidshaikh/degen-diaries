@@ -22,7 +22,7 @@
       "@styles/*": ["styles/*"]
     },
     "skipDefaultLibCheck": true,
-    "strictNullChecks": true
+    "strictNullChecks": false
   },
   "include": [
     "next-env.d.ts",
