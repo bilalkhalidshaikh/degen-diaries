@@ -256,8 +256,8 @@ export function LoginMain(): JSX.Element {
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const { open, close } = useWeb3Modal();
   const { address, connector, isConnected } = useAccount();
-  const { data: ensAvatar } = useEnsAvatar({ address });
-  const { data: ensName } = useEnsName({ address });
+  // const { data: ensAvatar } = useEnsAvatar({ address });
+  // const { data: ensName } = useEnsName({ address });
   const { connect, connectors, error, isLoading, pendingConnector } =
     useConnect();
   const { disconnect } = useDisconnect();
@@ -391,7 +391,7 @@ export function LoginMain(): JSX.Element {
             </p>
             <p className='text-green-500'>
               Wallet Address .{' '}
-              <span>{ensName ? `${ensName} (${address})` : address}</span>
+              {/* <span>{ensName ? `${ensName} (${address})` : address}</span> */}
             </p>
             <p className='text-green-500'>
               <span>Connected to {connector && connector?.name}</span>
