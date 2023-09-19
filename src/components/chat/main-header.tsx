@@ -7,16 +7,16 @@ import type { ReactNode } from 'react';
 import type { IconName } from '@components/ui/hero-icon';
 
 type MainHeaderProps = {
-  tip?: string;
+  tip?: any;
   title?: any;
   children?: ReactNode;
   iconName?: IconName;
-  className?: string;
+  className?: any;
   disableSticky?: boolean;
   useActionButton?: boolean;
   useMobileSidebar?: boolean;
   action?: () => void;
-  headerBackground?: string; // New prop to customize the background of the header
+  headerBackground?: any; // New prop to customize the background of the header
 };
 
 export function MainHeader({
