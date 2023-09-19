@@ -27,6 +27,7 @@ type User = {
   id: any;
   name?: any;
   imgSrc?: any;
+  photoURL?: any; // Add this line to include the photoURL property
 };
 
 export default function Chat({ chatId }: { chatId: string }): JSX.Element {
