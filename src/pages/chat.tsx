@@ -24,8 +24,8 @@ const db = getFirestore();
 
 type User = {
   id: any;
-  name: any;
-  imgSrc?: string;
+  name?: any;
+  imgSrc?: any;
 };
 
 export default function Chat({ chatId }: { chatId: string }): JSX.Element {
