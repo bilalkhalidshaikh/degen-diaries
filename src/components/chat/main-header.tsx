@@ -8,7 +8,7 @@ import type { IconName } from '@components/ui/hero-icon';
 
 type MainHeaderProps = {
   tip?: string;
-  title?: string;
+  title?: any;
   children?: ReactNode;
   iconName?: IconName;
   className?: string;
