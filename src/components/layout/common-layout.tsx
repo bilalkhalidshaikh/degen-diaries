@@ -29,6 +29,18 @@ export function HomeLayout({ children }: LayoutProps): JSX.Element {
   );
 }
 
+export function ChatLayout({ children }: LayoutProps): JSX.Element {
+  return (
+    <>
+      {children}
+      {/* <Aside> */}
+      {/* Add components that you want to display in the aside section for chat layout */}
+      {/* <Suggestions />  */}
+      {/* </Aside> */}
+    </>
+  );
+}
+
 export function UserLayout({ children }: LayoutProps): JSX.Element {
   return (
     <>

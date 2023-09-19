@@ -1,17 +1,13 @@
 import { useMemo } from 'react';
-import { AnimatePresence } from 'framer-motion';
 import { toast } from 'react-hot-toast';
-import { orderBy, query } from 'firebase/firestore';
+import { query } from 'firebase/firestore';
 import { useAuth } from '@lib/context/web3-auth-context';
 // import { useAuth } from '@lib/context/auth-context';
 import { useModal } from '@lib/hooks/useModal';
 import { useCollection } from '@lib/hooks/useCollection';
 import { useArrayDocument } from '@lib/hooks/useArrayDocument';
 import { clearAllBookmarks } from '@lib/firebase/utils';
-import {
-  tweetsCollection,
-  userBookmarksCollection
-} from '@lib/firebase/collections';
+import { userBookmarksCollection } from '@lib/firebase/collections';
 import { HomeLayout, ProtectedLayout } from '@components/layout/common-layout';
 import { MainLayout } from '@components/layout/main-layout';
 import { SEO } from '@components/common/seo';
@@ -26,6 +22,11 @@ import { ToolTip } from '@components/ui/tooltip';
 import { HeroIcon } from '@components/ui/hero-icon';
 import { Loading } from '@components/ui/loading';
 import type { ReactElement, ReactNode } from 'react';
+import { where, orderBy } from 'firebase/firestore';
+import { tweetsCollection } from '@lib/firebase/collections';
+import { AnimatePresence } from 'framer-motion';
+import { Error } from '@components/ui/error';
+import { useInfiniteScroll } from '@lib/hooks/useInfiniteScroll';
 
 export default function Explore(): JSX.Element {
   const { user } = useAuth();
@@ -56,9 +57,15 @@ export default function Explore(): JSX.Element {
     toast.success('Successfully cleared all bookmarks');
   };
 
+  const { data, loading, LoadMore } = useInfiniteScroll(
+    tweetsCollection,
+    [where('parent', '==', null), orderBy('createdAt', 'desc')],
+    { includeUser: true, allowNull: true, preserve: true }
+  );
+
   return (
     <MainContainer>
-      <SEO title='Explore / Degen Diaries' />
+      <SEO title='Top Tweets / Degen Diaries' />
       <Modal
         modalClassName='max-w-xs bg-main-background w-full p-8 rounded-2xl'
         open={open}
@@ -76,7 +83,7 @@ export default function Explore(): JSX.Element {
       </Modal>
       <MainHeader className='flex items-center justify-between'>
         <div className='-mb-1 flex flex-col'>
-          <h2 className='-mt-1 text-xl font-bold'>Explore</h2>
+          <h2 className='-mt-1 text-xl font-bold'>Top Tweets</h2>
           <p className='text-xs text-light-secondary dark:text-dark-secondary'>
             @{user?.username}
           </p>
@@ -94,12 +101,28 @@ export default function Explore(): JSX.Element {
           />
         </Button>
       </MainHeader>
-      <section className='mt-0.5'>
+      {/* <section className='mt-0.5'>
         <StatsEmpty
           title='Nothing to see here for now'
           description='Don’t let the good ones fly away! Explore Tweets to enjoy and updated about what’s happening.'
           // imageData={{ src: '/assets/no-bookmarks.png', alt: 'No bookmarks' }}
         />
+      </section> */}
+      <section className='mt-0.5'>
+        {loading ? (
+          <Loading className='mt-5' />
+        ) : !data ? (
+          <Error message='Something went wrong' />
+        ) : (
+          <>
+            <AnimatePresence mode='popLayout'>
+              {data.map((tweet) => (
+                <Tweet {...tweet} key={tweet.id} />
+              ))}
+            </AnimatePresence>
+            <LoadMore />
+          </>
+        )}
       </section>
     </MainContainer>
   );

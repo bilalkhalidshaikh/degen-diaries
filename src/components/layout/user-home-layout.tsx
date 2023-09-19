@@ -17,6 +17,7 @@ import { variants } from '@components/user/user-header';
 import { UserEditProfile } from '@components/user/user-edit-profile';
 import { UserShare } from '@components/user/user-share';
 import type { LayoutProps } from './common-layout';
+import Link from 'next/link';
 
 export function UserHomeLayout({ children }: LayoutProps): JSX.Element {
   const { user, isAdmin } = useAuth();
@@ -75,14 +76,16 @@ export function UserHomeLayout({ children }: LayoutProps): JSX.Element {
                 ) : (
                   <div className='flex gap-2 self-start'>
                     <UserShare username={userData.username} />
-                    <Button
-                      className='dark-bg-tab group relative cursor-not-allowed border border-light-line-reply p-2
+                    <Link href='/chat'>
+                      <Button
+                        className='dark-bg-tab group relative cursor-pointer border border-light-line-reply p-2
                                  hover:bg-light-primary/10 active:bg-light-primary/20 dark:border-light-secondary 
                                  dark:hover:bg-dark-primary/10 dark:active:bg-dark-primary/20'
-                    >
-                      <HeroIcon className='h-5 w-5' iconName='EnvelopeIcon' />
-                      <ToolTip tip='Message' />
-                    </Button>
+                      >
+                        <HeroIcon className='h-5 w-5' iconName='EnvelopeIcon' />
+                        <ToolTip tip='Message' />
+                      </Button>
+                    </Link>
                     <FollowButton
                       userTargetId={userData.id}
                       userTargetUsername={userData.username}

@@ -29,7 +29,7 @@ export default function UserLikes(): JSX.Element {
 
   return (
     <section>
-      <SEO
+      {/* <SEO
         title={`Tweets liked by ${name as string} (@${
           username as string
         }) / Twitter`}
@@ -47,7 +47,8 @@ export default function UserLikes(): JSX.Element {
             <Tweet {...tweet} key={tweet.id} />
           ))}
         </AnimatePresence>
-      )}
+      )} */}
+      There will be coins when you send APIs will do that..
     </section>
   );
 }

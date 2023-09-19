@@ -16,7 +16,7 @@ import { useAccount } from 'wagmi';
 export type NavLink = {
   href: string;
   linkName: string;
-  iconName: IconName;
+  iconName: any;
   disabled?: boolean;
   canBeHidden?: boolean;
 };
@@ -50,6 +50,12 @@ const navLinks: Readonly<NavLink[]> = [
     href: '/bookmarks',
     linkName: 'Bookmarks',
     iconName: 'BookmarkIcon',
+    canBeHidden: true
+  },
+  {
+    href: '/chat',
+    linkName: 'Chat',
+    iconName: 'EnvelopeIcon',
     canBeHidden: true
   }
   // {

@@ -32,7 +32,7 @@ export default function UserMedia(): JSX.Element {
 
   return (
     <section>
-      <SEO
+      {/* <SEO
         title={`Media Tweets by ${name as string} (@${
           username as string
         }) / Twitter`}
@@ -49,9 +49,10 @@ export default function UserMedia(): JSX.Element {
         <AnimatePresence mode='popLayout'>
           {sortedTweets.map((tweet) => (
             <Tweet {...tweet} key={tweet.id} />
-          ))}
+          ))} 
         </AnimatePresence>
-      )}
+      )} */}
+      There will be trades when you send APIs will do that..
     </section>
   );
 }

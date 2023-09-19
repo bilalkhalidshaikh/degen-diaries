@@ -19,7 +19,8 @@ const Icons = {
   FeatherIcon,
   SpinnerIcon,
   TriangleIcon,
-  MetaMaskIcon
+  MetaMaskIcon,
+  ChatIcon
 };
 
 export function CustomIcon({
@@ -40,6 +41,16 @@ function TwitterIcon({ className }: IconProps): JSX.Element {
     </svg>
   );
 }
+function ChatIcon({ className }: IconProps): JSX.Element {
+  return (
+    <svg className={cn('fill-current', className)} viewBox='0 0 24 24'>
+      <g>
+        <path d='M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2h-4l-4 4-4-4H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zm0 2v10h3.17L12 18.83l4.83-4.83H20V6H4z' />
+      </g>
+    </svg>
+  );
+}
+
 function MetaMaskIcon({ className }: IconProps): JSX.Element {
   return (
     <>
