@@ -180,6 +180,11 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
     return <div>Loading...</div>; // You can replace this with a proper loading component
   }
 
+  type MainHeaderProps = {
+    title: React.ReactNode;
+    // ... other props
+  };
+
   return (
     // <MainContainer className='min-h-screen bg-gray-900 text-gray-100'>
     <>
