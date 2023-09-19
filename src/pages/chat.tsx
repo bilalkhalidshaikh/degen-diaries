@@ -50,7 +50,7 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
     const fetchUsers = async () => {
       try {
         const userCol = collection(db, 'users');
-        const userSnapshot = await getDocs(userCol);
+        const userSnapshot = await getDoc(userCol);
         const userList = userSnapshot.docs
           .map((doc) => ({ ...doc.data(), id: doc.id }))
           .filter((u) => u.id !== user?.id);
@@ -110,7 +110,7 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
     try {
       // Check if a chat already exists between the two users
       const chatsCol = collection(db, 'chats');
-      const chatsSnapshot = await getDocs(chatsCol);
+      const chatsSnapshot = await getDoc(chatsCol);
       let chatDoc = chatsSnapshot.docs.find((doc) => {
         const chatData = doc.data();
         return (
