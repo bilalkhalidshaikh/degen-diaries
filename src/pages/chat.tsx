@@ -14,10 +14,11 @@ import {
   onSnapshot,
   orderBy,
   doc,
-  getFirestore,
-  getDocs
+  getFirestore
 } from 'firebase/firestore';
 import { setDoc } from 'firebase/firestore';
+import { getDoc } from 'firebase/firestore';
+
 import Link from 'next/link';
 
 const db = getFirestore();
@@ -67,7 +68,7 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
       // Fetch the chat details to get the user IDs involved in the chat
       const fetchChatDetails = async () => {
         try {
-          const chatDoc = await doc(db, `chats/${chatId}`).get();
+          const chatDoc = await getDoc(doc(db, `chats/${chatId}`));
           const chatData = chatDoc.data();
           if (chatData) {
             const otherUserId = chatData.userIds.find(
