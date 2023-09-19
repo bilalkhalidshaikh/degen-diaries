@@ -17,7 +17,7 @@ import {
   getFirestore
 } from 'firebase/firestore';
 import { setDoc } from 'firebase/firestore';
-import { getDocs } from 'firebase/firestore';
+import { getDoc, getDocs } from 'firebase/firestore';
 
 import Link from 'next/link';
 
@@ -68,14 +68,16 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
       // Fetch the chat details to get the user IDs involved in the chat
       const fetchChatDetails = async () => {
         try {
-          const chatDoc = await getDocs(doc(db, `chats/${chatId}`));
+          const chatDoc = await getDoc(doc(db, `chats/${chatId}`)); // Use getDoc here
           const chatData = chatDoc.data();
           if (chatData) {
             const otherUserId = chatData.userIds.find(
               (id: string) => id !== user?.id
             );
             if (otherUserId) {
-              const otherUserDoc = await doc(db, `users/${otherUserId}`).get();
+              const otherUserDoc = await getDoc(
+                doc(db, `users/${otherUserId}`)
+              ); // Use getDoc here
               setChatUser({ ...otherUserDoc.data(), id: otherUserDoc.id });
             }
           }
