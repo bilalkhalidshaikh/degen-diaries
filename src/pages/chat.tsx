@@ -129,7 +129,7 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
         };
         const newChatDocRef = doc(collection(db, 'chats'));
         await setDoc(newChatDocRef, newChatData);
-        chatDoc = newChatDocRef;
+        chatDoc = await getDoc(newChatDocRef); // Get the QueryDocumentSnapshot of the new chat document
       }
 
       // Navigate to the chat
