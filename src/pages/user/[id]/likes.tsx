@@ -48,7 +48,10 @@ export default function UserLikes(): JSX.Element {
           ))}
         </AnimatePresence>
       )} */}
-      There will be coins when you send APIs will do that..
+      <StatsEmpty
+        title={`This wallet does not has any Coins yet`}
+        description='When they do, those Coins will show up here.'
+      />
     </section>
   );
 }

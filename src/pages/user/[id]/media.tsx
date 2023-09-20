@@ -52,7 +52,10 @@ export default function UserMedia(): JSX.Element {
           ))} 
         </AnimatePresence>
       )} */}
-      There will be trades when you send APIs will do that..
+      <StatsEmpty
+        title={`This wallet does not has any Trades yet`}
+        description='When they do, those Trades will show up here.'
+      />
     </section>
   );
 }

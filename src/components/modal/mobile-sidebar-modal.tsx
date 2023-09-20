@@ -15,6 +15,8 @@ import { ActionModal } from './action-modal';
 import { DisplayModal } from './display-modal';
 import type { NavLink } from '@components/sidebar/sidebar';
 import type { User } from '@lib/types/user';
+import { useAccount } from 'wagmi';
+import { useState, useEffect } from 'react';
 
 export type MobileNavLink = Omit<NavLink, 'canBeHidden'>;
 
@@ -103,18 +105,32 @@ export function MobileSidebarModal({
 
   const userLink = `/user/${username}`;
 
+  const { address, connector, isConnected } = useAccount();
+  const [web3Address, setWeb3Address] = useState('');
+
+  useEffect(() => {
+    setWeb3Address(address || '');
+  }, [address]);
+
+  function formatWalletAddress(address) {
+    if (!address || address.length < 8) {
+      return address;
+    }
+    return address.slice(0, 4) + '...' + address.slice(-4);
+  }
+
   return (
     <>
       <Modal
         className='items-center justify-center xs:flex'
-        modalClassName='max-w-xl bg-main-background w-full p-8 rounded-2xl hover-animation'
+        modalClassName='max-w-xl bg-main-background w-full p-0 rounded-2xl hover-animation'
         open={displayOpen}
         closeModal={displayCloseModal}
       >
         <DisplayModal closeModal={displayCloseModal} />
       </Modal>
       <Modal
-        modalClassName='max-w-xs bg-main-background w-full p-8 rounded-2xl items-center justify-center xs:flex'
+        modalClassName='max-w-xs bg-main-background w-full p-0 rounded-2xl items-center justify-center xs:flex' // Removed padding here
         open={logOutOpen}
         closeModal={logOutCloseModal}
       >
@@ -136,7 +152,9 @@ export function MobileSidebarModal({
         tip='Close'
         action={closeModal}
       />
-      <section className='-gap-2 mt-0.5 flex flex-col'>
+      <section className='flex flex-col gap-2 px-0'>
+        {' '}
+        {/* Removed top margin and left padding here */}
         <Link href={userLink}>
           <a className='blur-picture relative h-20 rounded-md'>
             {coverPhotoURL ? (
@@ -152,7 +170,9 @@ export function MobileSidebarModal({
             )}
           </a>
         </Link>
-        <div className='-mt-4 mb-8 ml-2'>
+        <div className='-mt-4 mb-8 ml-0'>
+          {' '}
+          {/* Adjusted left margin here */}
           <UserAvatar
             className='absolute -translate-y-1/2 bg-main-background p-1 hover:brightness-100
                        [&:hover>figure>span]:brightness-75
@@ -166,7 +186,8 @@ export function MobileSidebarModal({
         <div className='flex flex-col gap-4 rounded-xl bg-main-sidebar-background p-4'>
           <div className='flex flex-col'>
             <UserName
-              name={name}
+              // name={name}
+              name={formatWalletAddress(web3Address && web3Address)}
               username={username}
               verified={verified}
               className='-mb-1'

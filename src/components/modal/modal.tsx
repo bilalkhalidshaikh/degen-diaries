@@ -58,8 +58,8 @@ export function Modal({
           />
           <div
             className={cn(
-              'fixed inset-0 overflow-y-auto p-4',
-              className ?? 'flex items-center justify-center'
+              'fixed inset-0 overflow-y-auto p-0', // Set padding to zero
+              className ?? 'flex items-start justify-start' // Align to the top left
             )}
           >
             <Dialog.Panel
