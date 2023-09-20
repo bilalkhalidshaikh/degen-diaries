@@ -12,7 +12,7 @@
     "module": "esnext",
     "moduleResolution": "node",
     "resolveJsonModule": true,
-    "isolatedModules": false,
+    "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
     "baseUrl": "src",
@@ -24,7 +24,6 @@
     "skipDefaultLibCheck": true,
     "strictNullChecks": false
   },
-
   "include": [
     "next-env.d.ts",
     "**/*.ts",

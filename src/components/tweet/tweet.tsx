@@ -82,6 +82,7 @@ export function Tweet(tweet: TweetProps): JSX.Element {
         ...variants.animate,
         ...(parentTweet && { transition: { duration: 0.2 } })
       }}
+      className='mb-4 rounded-lg bg-white p-4 shadow-md dark:bg-gray-800' // Added margin-bottom here
     >
       <Modal
         className='flex items-start justify-center'
@@ -95,7 +96,7 @@ export function Tweet(tweet: TweetProps): JSX.Element {
         <a
           className={cn(
             `accent-tab hover-card relative flex flex-col 
-             gap-y-4 px-4 py-3 outline-none duration-200`,
+         gap-y-4 outline-none duration-200`, // Removed padding and background color from here
             parentTweet
               ? 'mt-0.5 pb-0 pt-2.5'
               : 'border-b border-light-border dark:border-dark-border'

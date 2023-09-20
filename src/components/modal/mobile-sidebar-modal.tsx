@@ -31,7 +31,7 @@ const topNavLinks: Readonly<MobileNavLink[]> = [
   },
   {
     href: '/lists',
-    linkName: 'Lists',
+    linkName: 'Diaries',
     iconName: 'Bars3BottomLeftIcon',
     disabled: true
   },
@@ -114,7 +114,7 @@ export function MobileSidebarModal({
         <DisplayModal closeModal={displayCloseModal} />
       </Modal>
       <Modal
-        modalClassName='max-w-xs bg-main-background w-full p-8 rounded-2xl'
+        modalClassName='max-w-xs bg-main-background w-full p-8 rounded-2xl items-center justify-center xs:flex'
         open={logOutOpen}
         closeModal={logOutCloseModal}
       >
@@ -190,7 +190,7 @@ export function MobileSidebarModal({
             ))}
           </div>
           <i className='h-0.5 bg-light-line-reply dark:bg-dark-line-reply' />
-          <nav className='flex flex-col'>
+          <nav className='float-left flex flex-col align-middle'>
             <MobileSidebarLink
               href={`/user/${username}`}
               iconName='UserIcon'
@@ -202,16 +202,19 @@ export function MobileSidebarModal({
           </nav>
           <i className='h-0.5 bg-light-line-reply dark:bg-dark-line-reply' />
           <nav className='flex flex-col'>
-            {bottomNavLinks.map((linkData) => (
+            {/* {bottomNavLinks.map((linkData) => (
               <MobileSidebarLink bottom {...linkData} key={linkData.href} />
-            ))}
+            ))} */}
             <Button
               className='accent-tab accent-bg-tab flex items-center gap-2 rounded-md p-1.5 font-bold transition
                          hover:bg-light-primary/10 focus-visible:ring-2 first:focus-visible:ring-[#878a8c] 
                          dark:hover:bg-dark-primary/10 dark:focus-visible:ring-white'
               onClick={displayOpenModal}
             >
-              <HeroIcon className='h-5 w-5' iconName='PaintBrushIcon' />
+              <HeroIcon
+                className='h-5 w-5 text-blue-500'
+                iconName='PaintBrushIcon'
+              />
               Theme
             </Button>
             <Button
@@ -221,7 +224,7 @@ export function MobileSidebarModal({
               onClick={logOutOpenModal}
             >
               <HeroIcon
-                className='h-5 w-5'
+                className='h-5 w-5 text-blue-500'
                 iconName='ArrowRightOnRectangleIcon'
               />
               Log out

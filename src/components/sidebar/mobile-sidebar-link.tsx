@@ -28,9 +28,15 @@ export function MobileSidebarLink({
         onClick={disabled ? preventBubbling() : undefined}
       >
         <HeroIcon
-          className={bottom ? 'h-5 w-5' : 'h-7 w-7'}
+          className={cn(
+            bottom ? 'h-5 w-5 text-blue-500' : 'h-7 w-7 text-blue-500',
+            {
+              'text-gray-400': disabled
+            }
+          )}
           iconName={iconName}
         />
+
         {linkName}
       </a>
     </Link>

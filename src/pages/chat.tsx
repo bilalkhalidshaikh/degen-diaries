@@ -194,7 +194,7 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
         useMobileSidebar
         title={
           <>
-            Go Home{' '}
+            Go to the{' '}
             <Link href='/home'>
               <a>Home</a>
             </Link>

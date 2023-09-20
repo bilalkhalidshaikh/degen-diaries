@@ -20,7 +20,8 @@ const Icons = {
   SpinnerIcon,
   TriangleIcon,
   MetaMaskIcon,
-  ChatIcon
+  ChatIcon,
+  AddIcon
 };
 
 export function CustomIcon({
@@ -41,6 +42,16 @@ function TwitterIcon({ className }: IconProps): JSX.Element {
     </svg>
   );
 }
+function AddIcon({ className }: IconProps): JSX.Element {
+  return (
+    <svg className={cn('fill-current', className)} viewBox='0 0 24 24'>
+      <g>
+        <path d='M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z' />
+      </g>
+    </svg>
+  );
+}
+
 function ChatIcon({ className }: IconProps): JSX.Element {
   return (
     <svg className={cn('fill-current', className)} viewBox='0 0 24 24'>

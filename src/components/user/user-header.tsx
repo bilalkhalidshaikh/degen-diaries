@@ -7,6 +7,8 @@ import { isPlural } from '@lib/utils';
 import { userStatsCollection } from '@lib/firebase/collections';
 import { UserName } from './user-name';
 import type { Variants } from 'framer-motion';
+import { useAccount } from 'wagmi';
+import { useState, useEffect } from 'react';
 
 export const variants: Variants = {
   initial: { opacity: 0 },
@@ -21,6 +23,19 @@ export function UserHeader(): JSX.Element {
   } = useRouter();
 
   const { user, loading } = useUser();
+  const { address, connector, isConnected } = useAccount();
+  const [web3Address, setWeb3Address] = useState('');
+
+  useEffect(() => {
+    setWeb3Address(address || '');
+  }, [address]);
+
+  function formatWalletAddress(address) {
+    if (!address || address.length < 8) {
+      return address;
+    }
+    return address.slice(0, 4) + '...' + address.slice(-4);
+  }
 
   const userId = user ? user.id : null;
 
@@ -54,7 +69,7 @@ export function UserHeader(): JSX.Element {
           {...variants}
           key='loading'
         >
-          <div className='mb-1 -mt-1 h-5 w-24' />
+          <div className='-mt-1 mb-1 h-5 w-24' />
           <div className='h-4 w-12' />
         </motion.div>
       ) : !user ? (
@@ -65,7 +80,8 @@ export function UserHeader(): JSX.Element {
         <motion.div className='-mb-1 truncate' {...variants} key='found'>
           <UserName
             tag='h2'
-            name={user.name}
+            // name={user.name}
+            name={formatWalletAddress(web3Address && web3Address)}
             className='-mt-1 text-xl'
             iconClassName='w-6 h-6'
             verified={user.verified}

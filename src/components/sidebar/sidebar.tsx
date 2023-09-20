@@ -126,7 +126,7 @@ export function Sidebar(): JSX.Element {
           >
             <CustomIcon
               className='block h-6 w-6 xl:hidden'
-              iconName='FeatherIcon'
+              iconName='AddIcon'
             />
             <p className='hidden xl:block'>Tweet</p>
           </Button>
