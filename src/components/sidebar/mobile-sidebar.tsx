@@ -33,7 +33,7 @@ export function MobileSidebar(): JSX.Element {
       <Modal
         className='p-0'
         modalAnimation={variant}
-        modalClassName='pb-4 pl-2 min-h-screen w-72 bg-main-background items-center justify-center xs:flex'
+        modalClassName='pb-4 pl-2 min-h-screen w-72 bg-main-background items-left justify-flex xs:flex'
         open={open}
         closeModal={closeModal}
       >

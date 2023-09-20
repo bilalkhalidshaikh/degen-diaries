@@ -27,6 +27,7 @@ import { tweetsCollection } from '@lib/firebase/collections';
 import { AnimatePresence } from 'framer-motion';
 import { Error } from '@components/ui/error';
 import { useInfiniteScroll } from '@lib/hooks/useInfiniteScroll';
+import { limit } from 'firebase/firestore';
 
 export default function Explore(): JSX.Element {
   const { user } = useAuth();
@@ -61,9 +62,8 @@ export default function Explore(): JSX.Element {
     tweetsCollection,
     [
       where('parent', '==', null),
-      orderBy('likesCount', 'desc'), // Order by likes count in descending order
-      orderBy('commentsCount', 'desc'), // Order by comments count in descending order
-      orderBy('createdAt', 'desc') // You can still keep ordering by creation date as a secondary sorting parameter
+      orderBy('createdAt', 'desc'),
+      limit(2) // Limit the query to only retrieve the two latest tweets
     ],
     { includeUser: true, allowNull: true, preserve: true }
   );
@@ -121,7 +121,7 @@ export default function Explore(): JSX.Element {
         ) : (
           <>
             <AnimatePresence mode='popLayout'>
-              {data.map((tweet) => (
+              {data?.map((tweet) => (
                 <Tweet {...tweet} key={tweet.id} />
               ))}
             </AnimatePresence>

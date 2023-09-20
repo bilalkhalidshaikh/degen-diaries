@@ -37,7 +37,7 @@ const topNavLinks: Readonly<MobileNavLink[]> = [
   },
   {
     href: '/people',
-    linkName: 'Twitter Circle',
+    linkName: 'Degen Circle',
     iconName: 'UserGroupIcon'
   }
 ];
@@ -136,7 +136,7 @@ export function MobileSidebarModal({
         tip='Close'
         action={closeModal}
       />
-      <section className='mt-0.5 flex flex-col gap-2 px-4'>
+      <section className='-gap-2 mt-0.5 flex flex-col'>
         <Link href={userLink}>
           <a className='blur-picture relative h-20 rounded-md'>
             {coverPhotoURL ? (
@@ -190,7 +190,7 @@ export function MobileSidebarModal({
             ))}
           </div>
           <i className='h-0.5 bg-light-line-reply dark:bg-dark-line-reply' />
-          <nav className='float-left flex flex-col align-middle'>
+          <nav className='flex flex-col align-middle'>
             <MobileSidebarLink
               href={`/user/${username}`}
               iconName='UserIcon'
@@ -200,6 +200,7 @@ export function MobileSidebarModal({
               <MobileSidebarLink {...linkData} key={linkData.href} />
             ))}
           </nav>
+
           <i className='h-0.5 bg-light-line-reply dark:bg-dark-line-reply' />
           <nav className='flex flex-col'>
             {/* {bottomNavLinks.map((linkData) => (
