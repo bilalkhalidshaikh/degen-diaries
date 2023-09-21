@@ -243,7 +243,8 @@ export function MobileSidebarModal({
               className='accent-tab accent-bg-tab flex items-center gap-2 rounded-md p-1.5 font-bold transition
                          hover:bg-light-primary/10 focus-visible:ring-2 first:focus-visible:ring-[#878a8c] 
                          dark:hover:bg-dark-primary/10 dark:focus-visible:ring-white'
-              onClick={logOutOpenModal}
+              // onClick={logOutOpenModal}
+              onClick={signOut}
             >
               <HeroIcon
                 className='h-5 w-5 text-blue-500'

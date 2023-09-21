@@ -27,6 +27,7 @@ import { CustomIcon } from '@components/ui/custom-icon';
 import type { Variants } from 'framer-motion';
 import type { Tweet } from '@lib/types/tweet';
 import type { User } from '@lib/types/user';
+import { useState, useEffect } from 'react';
 
 export const variants: Variants = {
   initial: { opacity: 0, y: -25 },
@@ -64,6 +65,17 @@ const pinModalData: Readonly<PinModalData[]> = [
     mainBtnLabel: 'Unpin'
   }
 ];
+
+function Coin({ onClick }: { onClick?: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className='rounded-full p-2 hover:bg-gray-300 hover:bg-opacity-50'
+    >
+      💰 {/* This is a placeholder. Replace with your desired coin icon */}
+    </button>
+  );
+}
 
 export function TweetActions({
   isOwner,
@@ -149,6 +161,21 @@ export function TweetActions({
     [pinOpen]
   );
 
+  function Coin({ onClick }: { onClick?: () => void }) {
+    return (
+      <button
+        onClick={onClick}
+        className='rounded-full p-2 hover:bg-gray-300 hover:bg-opacity-50'
+      >
+        💰 {/* This is a placeholder. Replace with your desired coin icon */}
+      </button>
+    );
+  }
+
+  const handleCoinClick = () => {
+    console.log('Coin clicked!');
+  };
+
   return (
     <>
       <Modal
@@ -215,6 +242,10 @@ export function TweetActions({
                   {...variants}
                   static
                 >
+                  {/* <UserTooltip tip="Coins"> */}
+                  <Coin onClick={handleCoinClick} />
+                  {/* </UserTooltip> */}
+
                   {(isAdmin || isOwner) && (
                     <Popover.Button
                       className='accent-tab flex w-full gap-3 rounded-md rounded-b-none p-4 text-accent-red

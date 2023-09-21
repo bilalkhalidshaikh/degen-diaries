@@ -82,7 +82,7 @@ export function Tweet(tweet: TweetProps): JSX.Element {
         ...variants.animate,
         ...(parentTweet && { transition: { duration: 0.2 } })
       }}
-      className='mb-4 rounded-lg bg-white p-4 shadow-md dark:bg-gray-800' // Added margin-bottom here
+      className='mb-4 rounded-lg bg-opacity-40 p-4 shadow-md backdrop-blur-md dark:bg-gray-900' // Added glassmorphism styles
     >
       <Modal
         className='flex items-start justify-center'
@@ -147,15 +147,22 @@ export function Tweet(tweet: TweetProps): JSX.Element {
                 </div>
                 <div className='px-4'>
                   {!modal && (
-                    <TweetActions
-                      isOwner={isOwner}
-                      ownerId={ownerId}
-                      tweetId={tweetId}
-                      parentId={parentId}
-                      username={username}
-                      hasImages={!!images}
-                      createdBy={createdBy}
-                    />
+                    <>
+                      {/* <UserTooltip bio={user?.walletAddress || "Wallet Address Not Available"}>
+                     <button className="p-2 hover:bg-opacity-50 hover:bg-gray-300 rounded-full">
+                       Coins
+                     </button>
+                   </UserTooltip> */}
+                      <TweetActions
+                        isOwner={isOwner}
+                        ownerId={ownerId}
+                        tweetId={tweetId}
+                        parentId={parentId}
+                        username={username}
+                        hasImages={!!images}
+                        createdBy={createdBy}
+                      />
+                    </>
                   )}
                 </div>
               </div>

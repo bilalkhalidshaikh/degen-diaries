@@ -69,6 +69,10 @@ export function TweetStats({
 
   const isStatsVisible = !!(totalReplies || totalTweets || totalLikes);
 
+  const handleCoinClick = () => {
+    console.log('Coin clicked!'); // Replace with your desired action
+  };
+
   return (
     <>
       {viewTweet && (
@@ -137,6 +141,15 @@ export function TweetStats({
             userId,
             tweetId
           )}
+        />
+        {/* Add the Coin TweetOption here */}
+        <TweetOption
+          className='hover:text-accent-yellow focus-visible:text-accent-yellow'
+          iconClassName='group-hover:bg-accent-yellow/10 group-active:bg-accent-yellow/20 
+                         group-focus-visible:bg-accent-yellow/10 group-focus-visible:ring-accent-yellow/80'
+          tip='This Wallet does not have any Coins yet.'
+          iconName='CurrencyDollarIcon' // Replace with your desired coin icon
+          onClick={handleCoinClick}
         />
         <TweetShare userId={userId} tweetId={tweetId} viewTweet={viewTweet} />
         {isOwner && (

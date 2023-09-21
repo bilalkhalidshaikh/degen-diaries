@@ -198,6 +198,8 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
     setShowChatBox(false);
   };
 
+  const BackArrowIcon = () => <span>←</span>; // Replace this with your actual back arrow icon
+
   return (
     <>
       <SEO title='Chat / Degen Diaries' />
@@ -210,7 +212,7 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
                 onClick={handleBackToUsers}
                 className='text-blue-500 hover:underline'
               >
-                Back
+                <BackArrowIcon />
               </button>
             ) : (
               <>
@@ -255,6 +257,10 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
         {showChatBox && (
           <div className='flex h-full w-full flex-col justify-between px-5 md:h-auto'>
             <div className='mt-5 flex-grow overflow-y-auto pb-16'>
+              <div className='mb-4 text-center text-xl font-bold'>
+                {chatUser?.name}{' '}
+                {/* Displaying the name of the user you're chatting with */}
+              </div>
               {messages.map((msg, index) => (
                 <div
                   key={index}
@@ -284,7 +290,7 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
                 </div>
               ))}
             </div>
-            <div className='flex items-center border-t border-gray-700 bg-gray-900 py-12'>
+            <div className='fixed bottom-0 left-0 right-0 flex items-center border-t border-gray-700 bg-gray-900 py-12'>
               <input
                 className='h-8 flex-grow rounded-xl bg-gray-700 px-3 py-8 text-gray-300'
                 type='text'
