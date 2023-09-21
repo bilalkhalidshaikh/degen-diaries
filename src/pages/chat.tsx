@@ -216,9 +216,9 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
               </button>
             ) : (
               <>
-                Go to the{' '}
+                {/* Go to the{' '} */}
                 <Link href='/home'>
-                  <a className='text-blue-500 hover:underline'>Home</a>
+                  <a className='text-blue-500 hover:underline'>←</a>
                 </Link>
               </>
             )}

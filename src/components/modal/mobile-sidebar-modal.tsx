@@ -84,7 +84,7 @@ export function MobileSidebarModal({
   coverPhotoURL,
   closeModal
 }: MobileSidebarModalProps): JSX.Element {
-  const { signOut } = useAuth();
+  const { signOut, disconnectWallet } = useAuth();
 
   const {
     open: displayOpen,
@@ -244,7 +244,7 @@ export function MobileSidebarModal({
                          hover:bg-light-primary/10 focus-visible:ring-2 first:focus-visible:ring-[#878a8c] 
                          dark:hover:bg-dark-primary/10 dark:focus-visible:ring-white'
               // onClick={logOutOpenModal}
-              onClick={signOut}
+              onClick={disconnectWallet}
             >
               <HeroIcon
                 className='h-5 w-5 text-blue-500'
