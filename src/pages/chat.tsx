@@ -155,10 +155,12 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
       return;
     }
 
-    if (message.trim()) {
+    const trimmedMessage = message.trim();
+
+    if (trimmedMessage) {
       try {
         await addDoc(collection(db, `chats/${chatId}/messages`), {
-          text: message,
+          text: trimmedMessage,
           sender: user.id, // Use the user's wallet address as the sender ID
           createdAt: new Date()
         });
@@ -189,9 +191,40 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
   // State to determine if chat box should be shown
   const [showChatBox, setShowChatBox] = useState(false);
 
-  const handleUserSelect = (userId) => {
-    startChat(userId);
-    setShowChatBox(true);
+  const handleUserSelect = async (userId) => {
+    try {
+      // Check if a chat already exists between the two users
+      const chatsCol = collection(db, 'chats');
+      const chatsSnapshot = await getDocs(chatsCol);
+      let chatDoc = chatsSnapshot.docs.find((doc) => {
+        const chatData = doc.data();
+        return (
+          chatData.userIds.includes(user.id) &&
+          chatData.userIds.includes(userId)
+        );
+      });
+
+      // If a chat doesn't exist, create a new one
+      if (!chatDoc) {
+        const newChatData = {
+          userIds: [user.id, userId],
+          createdAt: new Date()
+        };
+        const newChatDocRef = doc(collection(db, 'chats'));
+        await setDoc(newChatDocRef, newChatData);
+        chatDoc = await getDoc(newChatDocRef); // Get the QueryDocumentSnapshot of the new chat document
+      }
+
+      // Set the chat user and show the chat box
+      const otherUserDoc = await getDoc(doc(db, `users/${userId}`));
+      setChatUser({ ...otherUserDoc.data(), id: otherUserDoc.id });
+      setShowChatBox(true);
+
+      // Navigate to the chat
+      router.push(`/chat/${chatDoc.id}`);
+    } catch (error) {
+      console.error('Error starting chat:', error);
+    }
   };
 
   const handleBackToUsers = () => {
