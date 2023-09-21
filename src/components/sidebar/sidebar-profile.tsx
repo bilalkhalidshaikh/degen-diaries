@@ -33,7 +33,7 @@ export function SidebarProfile(): JSX.Element {
           focusOnMainBtn
           title='Log out of Degen Diaries?'
           description='You can always log back in at any time. If you just want to switch accounts, you can do that by adding an existing account.'
-          mainBtnLabel='Log out'
+          mainBtnLabel='Disconnect'
           action={signOut}
           closeModal={closeModal}
         />

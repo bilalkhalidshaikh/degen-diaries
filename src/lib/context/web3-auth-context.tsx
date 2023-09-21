@@ -117,6 +117,8 @@ export function AuthContextProvider({
       if (!userSnapshot.exists()) {
         console.log('User does not exist, creating...');
 
+        const validPhotoURL = getValidUrl(address);
+
         const userData: WithFieldValue<User> = {
           id: address, // Use wallet address as the user ID
           bio: null,
@@ -125,7 +127,8 @@ export function AuthContextProvider({
           accent: null,
           website: null,
           location: null,
-          photoURL: `https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSUTLhfdkuzPiOnl9wfnneG9l-bOM-YR53JCQ&usqp=CAU`,
+          // photoURL: `https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSUTLhfdkuzPiOnl9wfnneG9l-bOM-YR53JCQ&usqp=CAU`,
+          photoURL: validPhotoURL,
           username: address, // Set the username to the wallet address
           verified: false,
           following: [],
@@ -160,8 +163,9 @@ export function AuthContextProvider({
       } else {
         const userData = userSnapshot.data();
         // Check if the existing photoURL is valid, if not, update it to a valid URL
+        // Check if the existing photoURL is valid, if not, update it to a valid URL
         if (!userData.photoURL || userData.photoURL === 'Photo URL') {
-          userData.photoURL = `https://source.boringavatars.com/${address}`;
+          userData.photoURL = getValidUrl(address);
         }
         setUser(userData);
       }

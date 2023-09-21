@@ -186,76 +186,75 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
     // ... other props
   };
 
+  // State to determine if chat box should be shown
+  const [showChatBox, setShowChatBox] = useState(false);
+
+  const handleUserSelect = (userId) => {
+    startChat(userId);
+    setShowChatBox(true);
+  };
+
+  const handleBackToUsers = () => {
+    setShowChatBox(false);
+  };
+
   return (
-    // <MainContainer className='min-h-screen bg-gray-900 text-gray-100'>
     <>
       <SEO title='Chat / Degen Diaries' />
       <MainHeader
         useMobileSidebar
         title={
           <>
-            Go to the{' '}
-            <Link href='/home'>
-              <a>Home</a>
-            </Link>
+            {showChatBox ? (
+              <button
+                onClick={handleBackToUsers}
+                className='text-blue-500 hover:underline'
+              >
+                Back
+              </button>
+            ) : (
+              <>
+                Go to the{' '}
+                <Link href='/home'>
+                  <a className='text-blue-500 hover:underline'>Home</a>
+                </Link>
+              </>
+            )}
           </>
         }
         className='flex items-center justify-between border-b border-gray-700 bg-gray-800 p-4'
-      >
-        {/* Removed the "Start Random Chat" button */}
-      </MainHeader>
+      />
 
-      <div className='flex min-h-screen flex-col bg-gray-900 text-gray-100'>
-        {/* header */}
-        <div className='flex items-center justify-between border-b border-gray-700 bg-gray-800 px-5 py-5'>
-          <div className='text-2xl font-semibold'>
-            Live Talk with {chatId || chatUser?.id}
-          </div>
-          <img
-            src={
-              user?.photoURL ||
-              chatUser?.photoURL ||
-              'https://source.unsplash.com/random/600x600'
-            }
-            className='h-8 w-8 rounded-full object-cover'
-            alt='User Avatar'
-          />
-        </div>
-        {/* end header */}
-        {/* Chatting */}
-        <div className='flex flex-grow flex-row bg-gray-800'>
-          {/* chat list */}
-          <div className='flex w-1/6 flex-col overflow-y-auto border-r border-gray-700 p-4'>
-            {/* user list */}
-            <div className='flex flex-col space-y-4'>
-              {users.map((userDetail, index) => (
-                <div
-                  key={index}
-                  className={`flex cursor-pointer flex-row items-center space-x-3 border-b border-gray-700 px-2 py-3 pb-2 ${
-                    chatUser?.id === userDetail.id ? 'bg-gray-700' : ''
-                  }`}
-                  onClick={() => startChat(userDetail.id)}
-                >
-                  <img
-                    src={
-                      userDetail?.photoURL ||
-                      'https://source.unsplash.com/random/600x600'
-                    }
-                    className='h-12 w-12 rounded-full object-cover'
-                    alt='User Avatar'
-                  />
-                  <div className='font-semibold text-gray-300'>
-                    {userDetail?.name}
-                  </div>
+      <div className='flex h-screen flex-col bg-gray-900 text-gray-100 md:flex-row'>
+        {/* Chat List */}
+        {!showChatBox && (
+          <div className='flex h-full w-full flex-col overflow-y-auto border-r border-gray-700 p-4 md:w-1/4'>
+            {users.map((userDetail, index) => (
+              <div
+                key={index}
+                className='flex cursor-pointer flex-row items-center space-x-3 border-b border-gray-700 px-2 py-3 pb-2'
+                onClick={() => handleUserSelect(userDetail.id)}
+              >
+                <img
+                  src={
+                    userDetail?.photoURL ||
+                    'https://source.unsplash.com/random/600x600'
+                  }
+                  className='h-12 w-12 rounded-full object-cover'
+                  alt='User Avatar'
+                />
+                <div className='text-left font-semibold text-gray-300'>
+                  {userDetail?.name}
                 </div>
-              ))}
-            </div>
-            {/* end user list */}
+              </div>
+            ))}
           </div>
-          {/* end chat list */}
-          {/* message */}
-          <div className='flex w-5/6 flex-col justify-between px-5'>
-            <div className='mt-5 flex flex-grow flex-col overflow-y-auto'>
+        )}
+
+        {/* Messages */}
+        {showChatBox && (
+          <div className='flex h-full w-full flex-col justify-between px-5 md:h-auto'>
+            <div className='mt-5 flex-grow overflow-y-auto pb-16'>
               {messages.map((msg, index) => (
                 <div
                   key={index}
@@ -285,11 +284,11 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
                 </div>
               ))}
             </div>
-            <div className='flex items-center py-5'>
+            <div className='flex items-center border-t border-gray-700 bg-gray-900 py-12'>
               <input
-                className='w-full rounded-xl bg-gray-700 px-3 py-5 text-gray-300'
+                className='h-8 flex-grow rounded-xl bg-gray-700 px-3 py-8 text-gray-300'
                 type='text'
-                placeholder='type your message here...'
+                placeholder='Type your message here...'
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 onKeyDown={handleKeyDown}
@@ -302,10 +301,8 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
               </button>
             </div>
           </div>
-          {/* end message */}
-        </div>
+        )}
       </div>
-      {/* </MainContainer> */}
     </>
   );
 }
