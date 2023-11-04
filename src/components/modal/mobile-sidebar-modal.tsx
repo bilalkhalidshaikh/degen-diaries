@@ -140,7 +140,8 @@ export function MobileSidebarModal({
           title='Log out of Degen Diaries?'
           description='You can always log back in at any time. If you just want to switch accounts, you can do that by adding an existing account.'
           mainBtnLabel='Log out'
-          action={signOut}
+          // action={signOut}
+          action={disconnectWallet}
           closeModal={logOutCloseModal}
         />
       </Modal>
@@ -244,7 +245,7 @@ export function MobileSidebarModal({
                          hover:bg-light-primary/10 focus-visible:ring-2 first:focus-visible:ring-[#878a8c] 
                          dark:hover:bg-dark-primary/10 dark:focus-visible:ring-white'
               // onClick={logOutOpenModal}
-              onClick={disconnectWallet}
+              onClick={signOut}
             >
               <HeroIcon
                 className='h-5 w-5 text-blue-500'
