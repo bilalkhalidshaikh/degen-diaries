@@ -265,9 +265,34 @@ export function LoginMain(): JSX.Element {
     useConnect();
   const { disconnect } = useDisconnect();
   const [web3Address, setWeb3Address] = useState('');
+  const [referralCode, setReferralCode] = useState('');
 
   const handleConnect = async () => {
     open();
+  };
+
+  // This function can be called when the user clicks a "Submit Referral Code" button
+  const handleReferralCodeSubmitClick = async () => {
+    await handleReferralCodeSubmission();
+    try {
+      // Call the backend function to validate the referral code
+      const validateResponse = await firebase
+        .functions()
+        .httpsCallable('validateReferralCode')({ code: referralCode });
+
+      // If the code is valid, proceed with creating the user and then redeem the code
+      if (validateResponse.success) {
+        // Assume createUser is a function to handle the new user registration
+        const newUserId = await createUser(/* user details */);
+        await firebase.functions().httpsCallable('redeemReferralCode')({
+          code: referralCode,
+          newUserId
+        });
+      }
+    } catch (error) {
+      // Handle the error accordingly
+      console.error('Error validating or redeeming referral code:', error);
+    }
   };
 
   useEffect(() => {
@@ -316,6 +341,18 @@ export function LoginMain(): JSX.Element {
             >
               <CustomIcon iconName='GoogleIcon' />
               Register with Google
+            </Button>
+            <input
+              type='text'
+              value={referralCode}
+              onChange={(e) => setReferralCode(e.target.value)}
+              placeholder='Enter referral code (if any)'
+            />
+            <Button
+              // Assuming Button is a styled button component that accepts an onClick prop
+              onClick={handleReferralCodeSubmitClick} // Call the handleReferralCodeSubmission function on click
+            >
+              Submit Referral Code
             </Button>
 
             <div className='flex flex-col gap-3'>

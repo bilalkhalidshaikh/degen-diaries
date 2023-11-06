@@ -27,6 +27,109 @@ import type { EditableUserData } from '@lib/types/user';
 import type { FilesWithId, ImagesPreview } from '@lib/types/file';
 import type { Bookmark } from '@lib/types/bookmark';
 import type { Theme, Accent } from '@lib/types/theme';
+const functions = require('firebase-functions');
+const admin = require('firebase-admin');
+
+admin.initializeApp();
+
+exports.validateInitialReferralCode = functions.https.onCall(
+  async (data, context) => {
+    const code = data.code;
+    const db = admin.firestore();
+    const codeRef = db.collection('initialReferralCodes').doc(code);
+
+    return db.runTransaction(async (transaction) => {
+      const codeDoc = await transaction.get(codeRef);
+      if (!codeDoc.exists || codeDoc.data().used) {
+        throw new functions.https.HttpsError(
+          'failed-precondition',
+          'This code is invalid or has already been used.'
+        );
+      }
+
+      transaction.update(codeRef, { used: true });
+      return { success: true };
+    });
+  }
+);
+
+exports.generateReferralCodes = functions.firestore
+  .document('users/{userId}')
+  .onCreate((snap, context) => {
+    const userId = context.params.userId;
+    const userRef = admin.firestore().collection('users').doc(userId);
+    const newCode = generateRandomCode(6);
+
+    return userRef.update({
+      referralCode: newCode
+    });
+  });
+
+exports.validateReferralCode = functions.https.onCall(async (data, context) => {
+  const { code } = data;
+  const usersRef = admin.firestore().collection('users');
+  const snapshot = await usersRef
+    .where('referralCode', '==', code)
+    .limit(1)
+    .get();
+
+  if (snapshot.empty) {
+    throw new functions.https.HttpsError(
+      'not-found',
+      'Referral code does not exist.'
+    );
+  }
+
+  return { success: true };
+});
+
+exports.redeemReferralCode = functions.https.onCall(async (data, context) => {
+  const { code, newUserId } = data;
+  const db = admin.firestore();
+  const usersRef = db.collection('users');
+  const snapshot = await usersRef
+    .where('referralCode', '==', code)
+    .limit(1)
+    .get();
+
+  if (snapshot.empty) {
+    throw new functions.https.HttpsError(
+      'not-found',
+      'Referral code does not exist.'
+    );
+  }
+
+  const referrerUserId = snapshot.docs[0].id;
+  const referrerUserRef = usersRef.doc(referrerUserId);
+
+  await db.runTransaction(async (transaction) => {
+    const referrerUserDoc = await transaction.get(referrerUserRef);
+    if (!referrerUserDoc.exists) {
+      throw new functions.https.HttpsError(
+        'not-found',
+        'Referrer user does not exist.'
+      );
+    }
+
+    // Perform necessary updates, like incrementing the referrer's benefits
+    transaction.update(referrerUserRef, {
+      /* ... */
+    });
+    transaction.update(usersRef.doc(newUserId), { referrer: referrerUserId });
+
+    return { success: true };
+  });
+});
+
+function generateRandomCode(length) {
+  const characters =
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  for (let i = 0; i < length; i++) {
+    result += characters.charAt(Math.floor(Math.random() * characters.length));
+  }
+  return result;
+}
 
 export async function checkUsernameAvailability(
   username: string
