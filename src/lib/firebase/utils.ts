@@ -27,10 +27,10 @@ import type { EditableUserData } from '@lib/types/user';
 import type { FilesWithId, ImagesPreview } from '@lib/types/file';
 import type { Bookmark } from '@lib/types/bookmark';
 import type { Theme, Accent } from '@lib/types/theme';
-const functions = require('firebase-functions');
-const admin = require('firebase-admin');
+// const functions = require('firebase-functions');
+// const admin = require('firebase-admin');
 
-admin.initializeApp();
+// admin.initializeApp();
 
 exports.validateInitialReferralCode = functions.https.onCall(
   async (data, context) => {
