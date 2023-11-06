@@ -25,7 +25,8 @@ import type { Bookmark } from '@lib/types/bookmark';
 import type { Stats } from '@lib/types/stats';
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { useWeb3Modal } from '@web3modal/react';
+// import { useWeb3Modal } from '@web3modal/react';
+import { useWeb3Modal } from '@web3modal/wagmi';
 import { serverTimestamp } from 'firebase/firestore';
 import { getValidUrl } from './../../lib/context/url'; // replace with the actual path to your utility function
 
