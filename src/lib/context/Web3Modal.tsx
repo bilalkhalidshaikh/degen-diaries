@@ -106,25 +106,6 @@ import { createWeb3Modal } from '@web3modal/wagmi/react';
 import { defaultWagmiConfig } from '@web3modal/wagmi/react';
 import { mainnet, arbitrum } from 'viem/chains';
 
-// Configure chains
-// const { chains, publicClient } = configureChains([mainnet], [publicProvider()]);
-
-// // Project ID for WalletConnect
-// const projectId = '5ba2615e3ddcb89e772c02f921fca2c3';
-
-// // Create a wagmiConfig with the necessary connectors
-// const wagmiConfig = createConfig({
-//   connectors: [
-//     new InjectedConnector({ chains }),
-//     new WalletConnectConnector({
-//       chains,
-//       options: {
-//         projectId: projectId, // Provide your WalletConnect project ID here
-//       }
-//     }),
-//   ],
-//   publicClient,
-// });
 const projectId = '75f6b049bc9dfa057184fad34cb7207e';
 const metadata = {
   name: 'Web3Modal',

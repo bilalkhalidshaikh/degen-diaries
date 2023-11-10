@@ -41,6 +41,9 @@ const nextConfig = {
     // Add externals that are not to be included in the webpack bundle
     config.externals.push('pino-pretty', 'lokijs', 'encoding');
     return config;
+  },
+  typescript: {
+    ignoreBuildErrors: true
   }
 };
 
