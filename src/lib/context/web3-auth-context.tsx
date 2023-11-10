@@ -26,9 +26,13 @@ import type { Stats } from '@lib/types/stats';
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 // import { useWeb3Modal } from '@web3modal/react';
-import { useWeb3Modal } from '@web3modal/wagmi';
+import { useWeb3Modal } from '@web3modal/wagmi/react';
 import { serverTimestamp } from 'firebase/firestore';
 import { getValidUrl } from './../../lib/context/url'; // replace with the actual path to your utility function
+import { Web3ModalContext } from './Web3Modal';
+import { useWeb3ModalState } from '@web3modal/wagmi/react';
+
+// import { useEnsAvatar } from 'wagmi';
 
 // Initialize Firebase (make sure you have configured Firebase properly)
 const firebaseConfig = {
@@ -75,8 +79,8 @@ export function AuthContextProvider({
   // Ensure connector is available or set it to null
   const actualConnector = connector || null;
 
-  const { data: ensAvatar } = useEnsAvatar({ address });
-  const { data: ensName } = useEnsName({ address });
+  // const { data: ensAvatar } = useEnsAvatar({ address });
+  // const { data: ensName } = useEnsName({ address });
   const [user, setUser] = useState<User | null>(null);
   const [userBookmarks, setUserBookmarks] = useState<Bookmark[] | null>(null);
   const [error, setError] = useState<Error | null>(null);
@@ -204,17 +208,47 @@ export function AuthContextProvider({
     }
   }, [authUser, address]);
 
-  const { open, close } = useWeb3Modal();
+  const web3Modal = useContext(Web3ModalContext);
+
+  const { open, close } = web3Modal
+    ? useWeb3Modal()
+    : { open: () => {}, close: () => {} };
+
+  // const { open, close } = useWeb3Modal()
+
+  // const { open, close } = useWeb3Modal();
+
+  // const connectWithWallet = async (): Promise<void> => {
+  //   try {
+  //     // @ts-ignore
+  //     open(); // Open the web3 modal
+  //     console.log('manageUser called with authUser:', address && address);
+  //   } catch (error) {
+  //     setError(error as Error);
+  //   }
+  // };
 
   const connectWithWallet = async (): Promise<void> => {
     try {
-      // @ts-ignore
-      open(); // Open the web3 modal
-      console.log('manageUser called with authUser:', address && address);
+      console.log('Opening wallet connection modal...');
+      await open();
+      console.log('Modal opened, checking address...');
+      if (address) {
+        console.log('Wallet connected with address:', address);
+      } else {
+        console.error('Wallet connection failed: address is undefined');
+      }
     } catch (error) {
       setError(error as Error);
+      console.error('Error connecting wallet:', error);
     }
   };
+
+  // useEffect(() => {
+  //   if (address) {
+  //     manageUser();
+  //   }
+  // }, [address]);
 
   const disconnectWallet = async (): Promise<void> => {
     try {

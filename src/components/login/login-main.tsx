@@ -329,13 +329,13 @@ export function LoginMain(): JSX.Element {
         />
         <div className='flex max-w-md flex-col gap-4 text-white lg:max-w-2xl lg:gap-16'>
           <h1 className="text-center text-3xl before:content-['Visually_Appealing'] lg:text-6xl" />
-          <h2 className='hidden text-xl lg:block lg:text-3xl'>
+          <h2 className='hidden text-center text-xl lg:block lg:text-3xl'>
             Join Degen Diaries today.
           </h2>
         </div>
         <div className='flex flex-col gap-6 py-2'>
           <div className='grid gap-3 font-bold'>
-            <Button
+            {/* <Button
               className='flex justify-center gap-2 border border-light-line-reply font-bold text-light-primary transition hover:bg-[#e6e6e6] focus-visible:bg-[#e6e6e6] active:bg-[#cccccc] dark:border-0 dark:bg-white dark:hover:brightness-90 dark:focus-visible:brightness-90 dark:active:brightness-75'
               // onClick={signInWithGoogle}
             >
@@ -353,11 +353,11 @@ export function LoginMain(): JSX.Element {
               onClick={handleReferralCodeSubmitClick} // Call the handleReferralCodeSubmission function on click
             >
               Submit Referral Code
-            </Button>
+            </Button> */}
 
             <div className='flex flex-col gap-3'>
-              <i className='border-b border-light-border dark:border-dark-border' />
-              <p>or</p>
+              {/* <i className='border-b border-light-border dark:border-dark-border' />
+              <p>or</p> */}
               {web3Address && <p>Connected Wallet Address: {web3Address}</p>}
 
               <i className='border-b border-light-border dark:border-dark-border' />
