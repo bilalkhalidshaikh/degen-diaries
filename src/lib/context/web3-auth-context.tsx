@@ -29,7 +29,6 @@ import { getAuth } from 'firebase/auth';
 import { useWeb3Modal } from '@web3modal/wagmi/react';
 import { serverTimestamp } from 'firebase/firestore';
 import { getValidUrl } from './../../lib/context/url'; // replace with the actual path to your utility function
-import { Web3ModalContext } from './Web3Modal';
 import { useWeb3ModalState } from '@web3modal/wagmi/react';
 
 // import { useEnsAvatar } from 'wagmi';
@@ -208,13 +207,13 @@ export function AuthContextProvider({
     }
   }, [authUser, address]);
 
-  const web3Modal = useContext(Web3ModalContext);
+  // const web3Modal = useContext(Web3ModalContext);
 
-  const { open, close } = web3Modal
-    ? useWeb3Modal()
-    : { open: () => {}, close: () => {} };
+  // const { open, close } = web3Modal
+  //   ? useWeb3Modal()
+  //   : { open: () => {}, close: () => {} };
 
-  // const { open, close } = useWeb3Modal()
+  const { open, close } = useWeb3Modal();
 
   // const { open, close } = useWeb3Modal();
 
