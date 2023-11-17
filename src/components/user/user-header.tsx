@@ -23,12 +23,12 @@ export function UserHeader(): JSX.Element {
   } = useRouter();
 
   const { user, loading } = useUser();
-  const { address, connector, isConnected } = useAccount();
-  const [web3Address, setWeb3Address] = useState('');
+  // const { address, connector, isConnected } = useAccount();
+  // const [web3Address, setWeb3Address] = useState('');
 
-  useEffect(() => {
-    setWeb3Address(address || '');
-  }, [address]);
+  // useEffect(() => {
+  //   setWeb3Address(address || '');
+  // }, [address]);
 
   function formatWalletAddress(address) {
     if (!address || address.length < 8) {
@@ -80,8 +80,8 @@ export function UserHeader(): JSX.Element {
         <motion.div className='-mb-1 truncate' {...variants} key='found'>
           <UserName
             tag='h2'
-            // name={user.name}
-            name={formatWalletAddress(web3Address && web3Address)}
+            name={user.name}
+            // name={formatWalletAddress(web3Address && web3Address)}
             className='-mt-1 text-xl'
             iconClassName='w-6 h-6'
             verified={user.verified}

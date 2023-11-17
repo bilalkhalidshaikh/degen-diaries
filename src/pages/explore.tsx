@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 import { toast } from 'react-hot-toast';
 import { query } from 'firebase/firestore';
-import { useAuth } from '@lib/context/web3-auth-context';
-// import { useAuth } from '@lib/context/auth-context';
+// import { useAuth } from '@lib/context/web3-auth-context';
+import { useAuth } from '@lib/context/auth-context';
 import { useModal } from '@lib/hooks/useModal';
 import { useCollection } from '@lib/hooks/useCollection';
 import { useArrayDocument } from '@lib/hooks/useArrayDocument';

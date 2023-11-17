@@ -1,8 +1,8 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { Menu } from '@headlessui/react';
 import cn from 'clsx';
-// import { useAuth } from '@lib/context/auth-context';
-import { useAuth } from '@lib/context/web3-auth-context';
+import { useAuth } from '@lib/context/auth-context';
+// import { useAuth } from '@lib/context/web3-auth-context';
 import { useModal } from '@lib/hooks/useModal';
 import { Modal } from '@components/modal/modal';
 import { ActionModal } from '@components/modal/action-modal';

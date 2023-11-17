@@ -7,8 +7,8 @@ import '@styles/globals.scss';
 // import { Web3Modal } from '@web3modal/react';
 // import { configureChains, createConfig, WagmiConfig } from 'wagmi';
 // import { arbitrum, mainnet, polygon } from 'wagmi/chains';
-// import { AuthContextProvider } from '@lib/context/auth-context';
-import { AuthContextProvider } from '@lib/context/web3-auth-context';
+import { AuthContextProvider } from '@lib/context/auth-context';
+// import { AuthContextProvider } from '@lib/context/web3-auth-context';
 import { ThemeContextProvider } from '@lib/context/theme-context';
 import { AppHead } from '@components/common/app-head';
 import type { ReactElement, ReactNode } from 'react';
@@ -60,29 +60,29 @@ const metadata = {
 // configure the chains and provider that you want to use for your app,
 // keep in mind that you're allowed to pass any EVM-compatible chain.
 // It is also encouraged that you pass both alchemyProvider and infuraProvider.
-const { chains, provider, webSocketProvider } = configureChains(
-  [mainnet, polygonMumbai],
-  [publicProvider()]
-);
+// const { chains, provider, webSocketProvider } = configureChains(
+//   [mainnet, polygonMumbai],
+//   [publicProvider()]
+// );
 
 // This creates a wagmi client instance of createClient
 // and passes in the provider and webSocketProvider.
 
-const client = configureChains({
-  autoConnect: false,
-  provider,
-  webSocketProvider,
-  connectors: [
-    // connectors is to connect your wallet, defaults to InjectedConnector();
+// const client = configureChains({
+//   autoConnect: false,
+//   provider,
+//   webSocketProvider,
+//   connectors: [
+//     // connectors is to connect your wallet, defaults to InjectedConnector();
 
-    new WalletConnectConnector({
-      chains,
-      options: {
-        projectId: projectId
-      }
-    })
-  ]
-});
+//     new WalletConnectConnector({
+//       chains,
+//       options: {
+//         projectId: projectId
+//       }
+//     })
+//   ]
+// });
 
 type NextPageWithLayout = NextPage & {
   getLayout?: (page: ReactElement) => ReactNode;
@@ -103,16 +103,14 @@ export default function App({
 
   return (
     <>
-      <WagmiConfig client={client}>
-        <AppHead />
-        <AuthContextProvider>
-          {' '}
-          {/* Ensure AuthContextProvider is here */}
-          <ThemeContextProvider>
-            {getLayout(<Component {...pageProps} />)}
-          </ThemeContextProvider>
-        </AuthContextProvider>
-      </WagmiConfig>
+      {/* <WagmiConfig client={client}> */}
+      <AuthContextProvider>
+        <AppHead /> {/* Ensure AuthContextProvider is here */}
+        <ThemeContextProvider>
+          {getLayout(<Component {...pageProps} />)}
+        </ThemeContextProvider>
+      </AuthContextProvider>
+      {/* </WagmiConfig> */}
       {/* <Web3Modal projectId={projectId} ethereumClient={ethereumClient} /> */}
     </>
   );

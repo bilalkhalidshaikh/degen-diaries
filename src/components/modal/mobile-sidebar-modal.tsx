@@ -1,6 +1,6 @@
 import Link from 'next/link';
-// import { useAuth } from '@lib/context/auth-context';
-import { useAuth } from '@lib/context/web3-auth-context';
+import { useAuth } from '@lib/context/auth-context';
+// import { useAuth } from '@lib/context/web3-auth-context';
 import { useModal } from '@lib/hooks/useModal';
 import { Button } from '@components/ui/button';
 import { UserAvatar } from '@components/user/user-avatar';
@@ -84,7 +84,10 @@ export function MobileSidebarModal({
   coverPhotoURL,
   closeModal
 }: MobileSidebarModalProps): JSX.Element {
-  const { signOut, disconnectWallet } = useAuth();
+  const {
+    signOut
+    // disconnectWallet
+  } = useAuth();
 
   const {
     open: displayOpen,
@@ -105,12 +108,12 @@ export function MobileSidebarModal({
 
   const userLink = `/user/${username}`;
 
-  const { address, connector, isConnected } = useAccount();
+  // const { address, connector, isConnected } = useAccount();
   const [web3Address, setWeb3Address] = useState('');
 
-  useEffect(() => {
-    setWeb3Address(address || '');
-  }, [address]);
+  // useEffect(() => {
+  //   setWeb3Address(address || '');
+  // }, [address]);
 
   function formatWalletAddress(address) {
     if (!address || address.length < 8) {
@@ -140,8 +143,8 @@ export function MobileSidebarModal({
           title='Log out of Degen Diaries?'
           description='You can always log back in at any time. If you just want to switch accounts, you can do that by adding an existing account.'
           mainBtnLabel='Log out'
-          // action={signOut}
-          action={disconnectWallet}
+          action={signOut}
+          // action={disconnectWallet}
           closeModal={logOutCloseModal}
         />
       </Modal>
@@ -187,8 +190,8 @@ export function MobileSidebarModal({
         <div className='flex flex-col gap-4 rounded-xl bg-main-sidebar-background p-4'>
           <div className='flex flex-col'>
             <UserName
-              // name={name}
-              name={formatWalletAddress(web3Address && web3Address)}
+              name={name}
+              // name={formatWalletAddress(web3Address && web3Address)}
               username={username}
               verified={verified}
               className='-mb-1'

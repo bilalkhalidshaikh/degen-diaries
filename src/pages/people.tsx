@@ -1,8 +1,8 @@
 import { useRouter } from 'next/router';
 import { motion } from 'framer-motion';
 import { where } from 'firebase/firestore';
-// import { useAuth } from '@lib/context/auth-context';
-import { useAuth } from '@lib/context/web3-auth-context';
+import { useAuth } from '@lib/context/auth-context';
+// import { useAuth } from '@lib/context/web3-auth-context';
 import { usersCollection } from '@lib/firebase/collections';
 import { useInfiniteScroll } from '@lib/hooks/useInfiniteScroll';
 import {

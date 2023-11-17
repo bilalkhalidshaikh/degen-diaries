@@ -50,11 +50,11 @@ export function UserDetails({
   ];
 
   const [web3Address, setWeb3Address] = useState('');
-  const { address, connector, isConnected } = useAccount();
+  // const { address, connector, isConnected } = useAccount();
 
-  useEffect(() => {
-    setWeb3Address(address || '');
-  }, [address]);
+  // useEffect(() => {
+  //   setWeb3Address(address || '');
+  // }, [address]);
 
   return (
     <>
@@ -73,7 +73,7 @@ export function UserDetails({
       <div className='flex flex-col gap-2'>
         <p className='whitespace-pre-line break-words'>
           {' '}
-          {web3Address && <p>Connected Wallet Address: {web3Address}</p>}
+          {/* {web3Address && <p>Connected Wallet Address: {web3Address}</p>} */}
         </p>
         {bio && <p className='whitespace-pre-line break-words'>{bio}</p>}
         <div className='flex flex-wrap gap-x-3 gap-y-1 text-light-secondary dark:text-dark-secondary'>

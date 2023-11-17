@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/router';
-// import { useAuth } from '@lib/context/auth-context';
-import { useAuth } from '@lib/context/web3-auth-context';
+import { useAuth } from '@lib/context/auth-context';
+// import { useAuth } from '@lib/context/web3-auth-context';
 import type { User } from '@lib/types/user';
 
 export function useRequireAuth(redirectUrl?: string): User | null {

@@ -235,7 +235,7 @@
 
 // import { useAuth } from '@lib/context/auth-context';
 
-import { useAuth } from '@lib/context/web3-auth-context';
+// import { useAuth } from '@lib/context/web3-auth-context';
 import { NextImage } from '@components/ui/next-image';
 import { CustomIcon } from '@components/ui/custom-icon';
 import { Button } from '@components/ui/button';
@@ -252,52 +252,53 @@ import {
   useEnsAvatar,
   useEnsName
 } from 'wagmi';
+import { useAuth } from '@lib/context/auth-context';
 
 export function LoginMain(): JSX.Element {
-  // const { signInWithGoogle } = useAuth();
-  const { connectWithWallet } = useAuth();
-  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
-  const { open, close } = useWeb3Modal();
-  const { address, connector, isConnected } = useAccount();
-  // const { data: ensAvatar } = useEnsAvatar({ address });
-  // const { data: ensName } = useEnsName({ address });
-  const { connect, connectors, error, isLoading, pendingConnector } =
-    useConnect();
-  const { disconnect } = useDisconnect();
-  const [web3Address, setWeb3Address] = useState('');
-  const [referralCode, setReferralCode] = useState('');
+  const { signInWithGoogle } = useAuth();
+  // const { connectWithWallet } = useAuth();
+  // const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  // const { open, close } = useWeb3Modal();
+  // const { address, connector, isConnected } = useAccount();
+  // // const { data: ensAvatar } = useEnsAvatar({ address });
+  // // const { data: ensName } = useEnsName({ address });
+  // const { connect, connectors, error, isLoading, pendingConnector } =
+  //   useConnect();
+  // const { disconnect } = useDisconnect();
+  // const [web3Address, setWeb3Address] = useState('');
+  // const [referralCode, setReferralCode] = useState('');
 
-  const handleConnect = async () => {
-    open();
-  };
+  // const handleConnect = async () => {
+  //   open();
+  // };
 
-  // This function can be called when the user clicks a "Submit Referral Code" button
-  const handleReferralCodeSubmitClick = async () => {
-    await handleReferralCodeSubmission();
-    try {
-      // Call the backend function to validate the referral code
-      const validateResponse = await firebase
-        .functions()
-        .httpsCallable('validateReferralCode')({ code: referralCode });
+  // // This function can be called when the user clicks a "Submit Referral Code" button
+  // const handleReferralCodeSubmitClick = async () => {
+  //   await handleReferralCodeSubmission();
+  //   try {
+  //     // Call the backend function to validate the referral code
+  //     const validateResponse = await firebase
+  //       .functions()
+  //       .httpsCallable('validateReferralCode')({ code: referralCode });
 
-      // If the code is valid, proceed with creating the user and then redeem the code
-      if (validateResponse.success) {
-        // Assume createUser is a function to handle the new user registration
-        const newUserId = await createUser(/* user details */);
-        await firebase.functions().httpsCallable('redeemReferralCode')({
-          code: referralCode,
-          newUserId
-        });
-      }
-    } catch (error) {
-      // Handle the error accordingly
-      console.error('Error validating or redeeming referral code:', error);
-    }
-  };
+  //     // If the code is valid, proceed with creating the user and then redeem the code
+  //     if (validateResponse.success) {
+  //       // Assume createUser is a function to handle the new user registration
+  //       const newUserId = await createUser(/* user details */);
+  //       await firebase.functions().httpsCallable('redeemReferralCode')({
+  //         code: referralCode,
+  //         newUserId
+  //       });
+  //     }
+  //   } catch (error) {
+  //     // Handle the error accordingly
+  //     console.error('Error validating or redeeming referral code:', error);
+  //   }
+  // };
 
-  useEffect(() => {
-    setWeb3Address(address || '');
-  }, [address]);
+  // useEffect(() => {
+  //   setWeb3Address(address || '');
+  // }, [address]);
 
   // useEffect(() => {
   //   let timer;
@@ -358,16 +359,24 @@ export function LoginMain(): JSX.Element {
             <div className='flex flex-col gap-3'>
               {/* <i className='border-b border-light-border dark:border-dark-border' />
               <p>or</p> */}
-              {web3Address && <p>Connected Wallet Address: {web3Address}</p>}
+              {/* {web3Address && <p>Connected Wallet Address: {web3Address}</p>} */}
 
               <i className='border-b border-light-border dark:border-dark-border' />
             </div>
-            <Button
+            {/* <Button
               className='flex cursor-pointer justify-center gap-2 border border-light-line-reply font-bold text-light-primary transition hover:bg-[#e6e6e6] focus-visible:bg-[#e6e6e6] active:bg-[#cccccc] dark:border-0 dark:bg-white dark:hover:brightness-90 dark:focus-visible:brightness-90 dark:active:brightness-75'
               // onClick={handleConnect} // Use the event handler here
               onClick={connectWithWallet} // Use the event handler here
             >
               <CustomIcon iconName='MetaMaskIcon' /> Register with Web3.0
+            </Button> */}
+            <Button
+              className='flex justify-center gap-2 border border-light-line-reply font-bold text-light-primary transition
+                         hover:bg-[#e6e6e6] focus-visible:bg-[#e6e6e6] active:bg-[#cccccc] dark:border-0 dark:bg-white
+                         dark:hover:brightness-90 dark:focus-visible:brightness-90 dark:active:brightness-75'
+              onClick={signInWithGoogle}
+            >
+              <CustomIcon iconName='GoogleIcon' /> Sign up with Google
             </Button>
             <p className='inner:custom-underline inner:custom-underline text-center text-xs text-light-secondary inner:text-accent-blue dark:text-dark-secondary'>
               By signing up, you agree to the{' '}
@@ -401,7 +410,7 @@ export function LoginMain(): JSX.Element {
             <p className='font-bold'>Already have an account? </p>
             <Button
               className='border border-light-line-reply font-bold text-accent-blue hover:bg-accent-blue/10 focus-visible:bg-accent-blue/10 focus-visible:!ring-accent-blue/80 active:bg-accent-blue/20 dark:border-light-secondary'
-              // onClick={signInWithGoogle}
+              onClick={signInWithGoogle}
             >
               Sign in
             </Button>
@@ -410,7 +419,7 @@ export function LoginMain(): JSX.Element {
       </div>
 
       {/* Success Modal */}
-      <Dialog
+      {/* <Dialog
         open={isSuccessModalOpen}
         onClose={() => setIsSuccessModalOpen(false)}
         as='div'
@@ -431,7 +440,6 @@ export function LoginMain(): JSX.Element {
             </p>
             <p className='text-green-500'>
               Wallet Address .{' '}
-              {/* <span>{ensName ? `${ensName} (${address})` : address}</span> */}
             </p>
             <p className='text-green-500'>
               <span>Connected to {connector && connector?.name}</span>
@@ -449,7 +457,7 @@ export function LoginMain(): JSX.Element {
             </Button>
           </div>
         </div>
-      </Dialog>
+      </Dialog> */}
     </main>
   );
 }

@@ -6,7 +6,8 @@ import { MainHeader } from '@components/chat/main-header';
 import type { ReactElement, ReactNode } from 'react';
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { useAuth } from '../lib/context/web3-auth-context'; // replace with the actual path to your auth context
+// import { useAuth } from '../lib/context/web3-auth-context'; // replace with the actual path to your auth context
+import { useAuth } from '../lib/context/auth-context'; // replace with the actual path to your auth context
 import {
   collection,
   addDoc,
