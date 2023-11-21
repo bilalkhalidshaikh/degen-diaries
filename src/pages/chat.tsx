@@ -234,6 +234,19 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
 
   const BackArrowIcon = () => <span>←</span>; // Replace this with your actual back arrow icon
 
+  const [searchTerm, setSearchTerm] = useState('');
+  const filteredUsers = users.filter((user) =>
+    user.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Function to format the date
+
+  // Custom styles for chat bubbles and the chat container
+  const chatBubbleStyles = (isCurrentUser: boolean) =>
+    `max-w-xs md:max-w-md lg:max-w-lg break-words rounded-lg p-4 ${
+      isCurrentUser ? 'bg-blue-500 text-white' : 'bg-gray-700 text-gray-300'
+    }`;
+
   return (
     <>
       <SEO title='Chat / Degen Diaries' />
@@ -262,6 +275,40 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
       />
 
       <div className='flex h-screen flex-col bg-gray-900 text-gray-100 md:flex-row'>
+        {/* Mobile header with back button and chat user info */}
+        {showChatBox && chatUser && (
+          <div className='sticky top-0 z-10 flex w-full items-center justify-between bg-gray-900 p-4 shadow-md md:hidden'>
+            <button
+              onClick={handleBackToUsers}
+              className='rounded-full p-2 text-blue-500 hover:bg-gray-700'
+            >
+              {/* SVG for Back Icon */}
+              <svg
+                xmlns='http://www.w3.org/2000/svg'
+                className='h-6 w-6'
+                fill='none'
+                viewBox='0 0 24 24'
+                stroke='currentColor'
+              >
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth={2}
+                  d='M15 19l-7-7 7-7'
+                />
+              </svg>
+            </button>
+            <div className='flex items-center'>
+              <img
+                src={chatUser.photoURL || '/default-avatar.png'}
+                className='h-10 w-10 rounded-full object-cover'
+                alt={`${chatUser.name}'s avatar`}
+              />
+              <span className='ml-3 font-semibold'>{chatUser.name}</span>
+            </div>
+            <div className='w-10' /> {/* Spacer div for centering the title */}
+          </div>
+        )}
         {/* Chat List */}
         {!showChatBox && (
           <div className='flex h-full w-full flex-col overflow-y-auto border-r border-gray-700 p-4 md:w-1/4'>
@@ -324,9 +371,10 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
                 </div>
               ))}
             </div>
-            <div className='fixed bottom-0 left-0 right-0 flex items-center border-t border-gray-700 bg-gray-900 py-12'>
+            {/* Message input */}
+            <div className='flex w-full items-center border-t border-gray-700 p-4'>
               <input
-                className='h-8 flex-grow rounded-xl bg-gray-700 px-3 py-8 text-gray-300'
+                className='w-full rounded-full bg-gray-700 p-2 text-sm text-white placeholder-gray-400 focus:outline-none'
                 type='text'
                 placeholder='Type your message here...'
                 value={message}
@@ -335,9 +383,23 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
               />
               <button
                 onClick={handleSendMessage}
-                className='ml-3 rounded-lg bg-blue-600 px-4 py-2 text-white'
+                className='ml-4 rounded-full bg-blue-500 p-2 text-white hover:bg-blue-600 focus:outline-none'
               >
-                Send
+                {/* SVG for Send Icon */}
+                <svg
+                  xmlns='http://www.w3.org/2000/svg'
+                  className='h-6 w-6'
+                  fill='none'
+                  viewBox='0 0 24 24'
+                  stroke='currentColor'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    strokeWidth={2}
+                    d='M4 4l16 8m0 0l-16 8m16-8H4'
+                  />
+                </svg>
               </button>
             </div>
           </div>
