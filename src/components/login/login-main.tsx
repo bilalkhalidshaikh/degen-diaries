@@ -374,14 +374,14 @@ export function LoginMain(): JSX.Element {
             >
               <CustomIcon iconName='MetaMaskIcon' /> Register with Web3.0
             </Button>
-            <Button
+            {/* <Button
               className='flex justify-center gap-2 border border-light-line-reply font-bold text-light-primary transition
                          hover:bg-[#e6e6e6] focus-visible:bg-[#e6e6e6] active:bg-[#cccccc] dark:border-0 dark:bg-white
                          dark:hover:brightness-90 dark:focus-visible:brightness-90 dark:active:brightness-75'
               // onClick={signInWithGoogle}
             >
               <CustomIcon iconName='GoogleIcon' /> Sign up with Google
-            </Button>
+            </Button> */}
             <p className='inner:custom-underline inner:custom-underline text-center text-xs text-light-secondary inner:text-accent-blue dark:text-dark-secondary'>
               By signing up, you agree to the{' '}
               <a
