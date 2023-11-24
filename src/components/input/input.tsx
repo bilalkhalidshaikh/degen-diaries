@@ -11,8 +11,8 @@ import {
   manageTotalTweets,
   manageTotalPhotos
 } from '@lib/firebase/utils';
-import { useAuth } from '@lib/context/auth-context';
-// import { useAuth } from '@lib/context/web3-auth-context';
+// import { useAuth } from '@lib/context/auth-context';
+import { useAuth } from '@lib/context/web3-auth-context';
 import { sleep } from '@lib/utils';
 import { getImagesData } from '@lib/validation';
 import { UserAvatar } from '@components/user/user-avatar';

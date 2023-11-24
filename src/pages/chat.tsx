@@ -6,8 +6,8 @@ import { MainHeader } from '@components/chat/main-header';
 import type { ReactElement, ReactNode } from 'react';
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-// import { useAuth } from '../lib/context/web3-auth-context'; // replace with the actual path to your auth context
-import { useAuth } from '../lib/context/auth-context'; // replace with the actual path to your auth context
+import { useAuth } from '../lib/context/web3-auth-context'; // replace with the actual path to your auth context
+// import { useAuth } from '../lib/context/auth-context'; // replace with the actual path to your auth context
 import {
   collection,
   addDoc,
@@ -15,7 +15,9 @@ import {
   onSnapshot,
   orderBy,
   doc,
-  getFirestore
+  getFirestore,
+  deleteDoc,
+  updateDoc
 } from 'firebase/firestore';
 import { setDoc } from 'firebase/firestore';
 import { getDoc, getDocs } from 'firebase/firestore';
@@ -246,6 +248,18 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
     `max-w-xs md:max-w-md lg:max-w-lg break-words rounded-lg p-4 ${
       isCurrentUser ? 'bg-blue-500 text-white' : 'bg-gray-700 text-gray-300'
     }`;
+  // Function to delete a chat
+  const deleteChat = async (chatId) => {
+    if (!chatId) return;
+
+    try {
+      await deleteDoc(doc(db, 'chats', chatId));
+      console.log(`Chat with ID ${chatId} deleted.`);
+      // You may want to navigate the user away from the chat after deletion
+    } catch (error) {
+      console.error('Error deleting chat:', error);
+    }
+  };
 
   return (
     <>

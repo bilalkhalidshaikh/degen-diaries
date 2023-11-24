@@ -1,6 +1,6 @@
 import Link from 'next/link';
-import { useAuth } from '@lib/context/auth-context';
-// import { useAuth } from '@lib/context/web3-auth-context';
+// import { useAuth } from '@lib/context/auth-context';
+import { useAuth } from '@lib/context/web3-auth-context';
 import { useModal } from '@lib/hooks/useModal';
 import { Button } from '@components/ui/button';
 import { UserAvatar } from '@components/user/user-avatar';

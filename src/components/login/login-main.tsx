@@ -236,6 +236,7 @@
 // import { useAuth } from '@lib/context/auth-context';
 
 // import { useAuth } from '@lib/context/web3-auth-context';
+
 import { NextImage } from '@components/ui/next-image';
 import { CustomIcon } from '@components/ui/custom-icon';
 import { Button } from '@components/ui/button';
@@ -252,10 +253,13 @@ import {
   useEnsAvatar,
   useEnsName
 } from 'wagmi';
-import { useAuth } from '@lib/context/auth-context';
+// import { useAuth } from '@lib/context/auth-context';
+import { useAuth } from '@lib/context/web3-auth-context'; // This assumes you have a Web3Auth context
 
 export function LoginMain(): JSX.Element {
-  const { signInWithGoogle } = useAuth();
+  // const { signInWithGoogle } = useAuth();
+  const { connectWithWallet, disconnectWallet, user } = useAuth();
+
   // const { connectWithWallet } = useAuth();
   // const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   // const { open, close } = useWeb3Modal();
@@ -363,18 +367,18 @@ export function LoginMain(): JSX.Element {
 
               <i className='border-b border-light-border dark:border-dark-border' />
             </div>
-            {/* <Button
+            <Button
               className='flex cursor-pointer justify-center gap-2 border border-light-line-reply font-bold text-light-primary transition hover:bg-[#e6e6e6] focus-visible:bg-[#e6e6e6] active:bg-[#cccccc] dark:border-0 dark:bg-white dark:hover:brightness-90 dark:focus-visible:brightness-90 dark:active:brightness-75'
               // onClick={handleConnect} // Use the event handler here
               onClick={connectWithWallet} // Use the event handler here
             >
               <CustomIcon iconName='MetaMaskIcon' /> Register with Web3.0
-            </Button> */}
+            </Button>
             <Button
               className='flex justify-center gap-2 border border-light-line-reply font-bold text-light-primary transition
                          hover:bg-[#e6e6e6] focus-visible:bg-[#e6e6e6] active:bg-[#cccccc] dark:border-0 dark:bg-white
                          dark:hover:brightness-90 dark:focus-visible:brightness-90 dark:active:brightness-75'
-              onClick={signInWithGoogle}
+              // onClick={signInWithGoogle}
             >
               <CustomIcon iconName='GoogleIcon' /> Sign up with Google
             </Button>
@@ -410,10 +414,19 @@ export function LoginMain(): JSX.Element {
             <p className='font-bold'>Already have an account? </p>
             <Button
               className='border border-light-line-reply font-bold text-accent-blue hover:bg-accent-blue/10 focus-visible:bg-accent-blue/10 focus-visible:!ring-accent-blue/80 active:bg-accent-blue/20 dark:border-light-secondary'
-              onClick={signInWithGoogle}
+              // onClick={signInWithGoogle}
             >
               Sign in
             </Button>
+            {/* You may also want to show the disconnect button only when the user is connected */}
+            {user && (
+              <Button
+                className='border border-light-line-reply font-bold text-accent-blue hover:bg-accent-blue/10 focus-visible:bg-accent-blue/10 focus-visible:!ring-accent-blue/80 active:bg-accent-blue/20 dark:border-light-secondary'
+                onClick={disconnectWallet}
+              >
+                Disconnect Wallet
+              </Button>
+            )}
           </div>
         </div>
       </div>

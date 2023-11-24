@@ -1,5 +1,5 @@
-import { useAuth } from '@lib/context/auth-context';
-// import { useAuth } from '@lib/context/web3-auth-context';
+// import { useAuth } from '@lib/context/auth-context';
+import { useAuth } from '@lib/context/web3-auth-context';
 
 type UserFollowingProps = {
   userTargetId: string;

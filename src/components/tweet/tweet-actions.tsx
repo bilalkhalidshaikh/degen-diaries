@@ -5,8 +5,8 @@ import { Popover } from '@headlessui/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import cn from 'clsx';
 import { toast } from 'react-hot-toast';
-import { useAuth } from '@lib/context/auth-context';
-// import { useAuth } from '@lib/context/web3-auth-context';
+// import { useAuth } from '@lib/context/auth-context';
+import { useAuth } from '@lib/context/web3-auth-context';
 import { useModal } from '@lib/hooks/useModal';
 import { tweetsCollection } from '@lib/firebase/collections';
 import {
