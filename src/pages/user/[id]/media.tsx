@@ -122,11 +122,11 @@ export default function UserMedia(): JSX.Element {
     }
   };
 
-  if (loading || contractLoading) return <Loading />;
+  // if (loading || contractLoading) return <Loading />;
 
   return (
     <section>
-      <h1>Copy Trade Feature</h1>
+      {/* <h1>Copy Trade Feature</h1> */}
       {/* <Button onClick={handleCopyTradeToggle}>
         {isCopyTradingActive ? 'Disable Copy Trade' : 'Enable Copy Trade'}
       </Button>
@@ -134,7 +134,7 @@ export default function UserMedia(): JSX.Element {
         <p>Copy trade is active. Your trades will be copied by your followers.</p>
       ) : ( */}
       <StatsEmpty
-        title='Unfortunately :( Copy trade is not active.'
+        title='Unfortunately Copy trade is not currently active.'
         description='When they do, those Trades will show up here.'
       />
       {/* )} */}
