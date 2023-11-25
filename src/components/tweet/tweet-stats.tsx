@@ -7,6 +7,9 @@ import { ViewTweetStats } from '@components/view/view-tweet-stats';
 import { TweetOption } from './tweet-option';
 import { TweetShare } from './tweet-share';
 import type { Tweet } from '@lib/types/tweet';
+import { useTokenBalances } from '@lib/hooks/useTokenBalances'; // Adjust the path as necessary
+import { Modal } from '@components/modal/modal'; // Assuming this is the correct import path
+import { useModal } from '@lib/hooks/useModal';
 
 type TweetStatsProps = Pick<
   Tweet,
@@ -69,8 +72,28 @@ export function TweetStats({
 
   const isStatsVisible = !!(totalReplies || totalTweets || totalLikes);
 
-  const handleCoinClick = () => {
-    console.log('Coin clicked!'); // Replace with your desired action
+  // Use your custom hook to get token balances
+  const { erc20Balances, erc721Balances } = useTokenBalances();
+  // Define state for showing the modal
+  const [showBalancesModal, setShowBalancesModal] = useState(false);
+  const { open, closeModal } = useModal(); // Assuming you have a similar hook for controlling the modal state
+  const [showCoinsModal, setShowCoinsModal] = useState(false);
+
+  const handleOpenCoinsModal = () => {
+    setShowCoinsModal(true);
+  };
+
+  const handleCloseCoinsModal = () => {
+    setShowCoinsModal(false);
+  };
+  const handleCoinClick = (event) => {
+    if (event) {
+      event.stopPropagation();
+    }
+    // openModal(); // This function should set the state to open the modal
+    handleOpenCoinsModal();
+    console.log('ERC-20 Balances:', erc20Balances);
+    console.log('ERC-721 Balances:', erc721Balances);
   };
 
   return (
@@ -148,9 +171,72 @@ export function TweetStats({
           iconClassName='group-hover:bg-accent-yellow/10 group-active:bg-accent-yellow/20 
                          group-focus-visible:bg-accent-yellow/10 group-focus-visible:ring-accent-yellow/80'
           tip='This Wallet does not have any Coins yet.'
+          // tip=''
           iconName='CurrencyDollarIcon' // Replace with your desired coin icon
-          onClick={handleCoinClick}
+          onClick={(event) => handleCoinClick(event)}
         />
+
+        {/* // Render the modal conditionally */}
+        <Modal
+          open={showCoinsModal}
+          closeModal={handleCloseCoinsModal}
+          modalClassName='max-w-md mx-auto p-8 rounded-lg shadow bg-[#111827] text-white'
+        >
+          <div className='modal-content  text-white'>
+            {/* Display ERC-20 and ERC-721 token balances here */}
+            {/* Modal content */}
+            <div>
+              {erc20Balances && erc20Balances.length > 0 ? (
+                <div>
+                  <h3 className='text-lg font-medium leading-6 text-white'>
+                    ERC-20 Token Balances:
+                  </h3>
+                  <ul className='mt-2'>
+                    {erc20Balances.map((token) => (
+                      <li key={token.contractAddress} className='py-1'>
+                        {token.tokenName}: {token.balance}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : (
+                <p className='text-white'>
+                  This wallet doesn't have any ERC-20 tokens yet.
+                </p>
+              )}
+
+              {erc721Balances && erc721Balances.length > 0 ? (
+                <div className='mt-4'>
+                  <h3 className='text-lg font-medium leading-6 text-white'>
+                    ERC-721 Tokens:
+                  </h3>
+                  <ul className='mt-2'>
+                    {erc721Balances.map((nft) => (
+                      <li key={nft.tokenId} className='py-1'>
+                        {nft.tokenName} - Token ID: {nft.tokenId}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : (
+                <p className='mt-4 text-white'>
+                  This wallet doesn't have any ERC-721 tokens yet.
+                </p>
+              )}
+            </div>
+
+            <div className='mt-4'>
+              <button
+                type='button'
+                className='inline-flex justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2'
+                onClick={() => handleCloseCoinsModal()}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </Modal>
+        {/* // Render the modal conditionally */}
         <TweetShare userId={userId} tweetId={tweetId} viewTweet={viewTweet} />
         {isOwner && (
           <TweetOption

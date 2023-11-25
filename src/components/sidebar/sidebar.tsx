@@ -53,16 +53,16 @@ const navLinks: Readonly<NavLink[]> = [
     canBeHidden: true
   }
   // {
-  //   href: '/chat',
-  //   linkName: 'Chat',
-  //   iconName: 'EnvelopeIcon',
-  //   canBeHidden: true
-  // }
-  // {
   //   href: '/lists',
   //   linkName: 'Lists',
   //   iconName: 'Bars3BottomLeftIcon',
-  //   disabled: true,
+  //   // disabled: true,
+  //   canBeHidden: true
+  // }
+  // {
+  //   href: '/chat',
+  //   linkName: 'Chat',
+  //   iconName: 'EnvelopeIcon',
   //   canBeHidden: true
   // }
 ];

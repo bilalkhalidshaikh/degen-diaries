@@ -6,7 +6,7 @@ import { NumberStats } from './number-stats';
 import type { IconName } from '@components/ui/hero-icon';
 
 type TweetOption = {
-  tip: string;
+  tip: any;
   move?: number;
   stats?: number;
   iconName: IconName;
