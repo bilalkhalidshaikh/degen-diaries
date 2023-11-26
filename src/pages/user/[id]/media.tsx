@@ -93,7 +93,7 @@ import type { ReactElement, ReactNode } from 'react';
 import { Button } from '@components/ui/button';
 
 export default function UserMedia(): JSX.Element {
-  const { user } = useUser(); // Your custom hook to get user data
+  const { user } = useUser();
   const {
     initiateCopyTrade,
     checkCopyTradeStatus,
@@ -103,41 +103,53 @@ export default function UserMedia(): JSX.Element {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user?.walletAddress) {
-      checkCopyTradeStatus(user.walletAddress)
-        .then(setIsCopyTradingActive)
-        .finally(() => setLoading(false));
+    async function fetchCopyTradeStatus() {
+      if (user?.walletAddress) {
+        console.log('Checking copy trade status...');
+        setLoading(true);
+        try {
+          const status = await checkCopyTradeStatus(user.walletAddress);
+          setIsCopyTradingActive(status);
+          console.log('Copy trade status:', status);
+        } catch (error) {
+          console.error('Failed to check copy trade status:', error);
+        }
+        setLoading(false);
+      }
     }
+    fetchCopyTradeStatus();
   }, [user?.walletAddress, checkCopyTradeStatus]);
 
   const handleCopyTradeToggle = async () => {
     setLoading(true);
     try {
-      await initiateCopyTrade(user.walletAddress, !isCopyTradingActive);
-      setIsCopyTradingActive(!isCopyTradingActive);
+      const newStatus = !isCopyTradingActive;
+      await initiateCopyTrade(user.walletAddress, newStatus);
+      setIsCopyTradingActive(newStatus);
     } catch (error) {
       console.error('Copy trade toggling failed', error);
-    } finally {
-      setLoading(false);
     }
+    setLoading(false);
   };
 
-  // if (loading || contractLoading) return <Loading />;
+  if (loading || contractLoading) return <Loading />;
 
   return (
     <section>
-      {/* <h1>Copy Trade Feature</h1> */}
-      {/* <Button onClick={handleCopyTradeToggle}>
+      <h1>Copy Trade Feature</h1>
+      <Button onClick={handleCopyTradeToggle}>
         {isCopyTradingActive ? 'Disable Copy Trade' : 'Enable Copy Trade'}
       </Button>
       {isCopyTradingActive ? (
-        <p>Copy trade is active. Your trades will be copied by your followers.</p>
-      ) : ( */}
-      <StatsEmpty
-        title='Unfortunately Copy trade is not currently active.'
-        description='When they do, those Trades will show up here.'
-      />
-      {/* )} */}
+        <p>
+          Copy trade is active. Your trades will be copied by your followers.
+        </p>
+      ) : (
+        <StatsEmpty
+          title='Copy trade is not currently active.'
+          description='Enable the feature to allow your trades to be copied.'
+        />
+      )}
     </section>
   );
 }

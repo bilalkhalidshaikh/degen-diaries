@@ -3,7 +3,7 @@ import { ethers } from 'ethers';
 import { useState, useCallback } from 'react';
 
 // Replace with your smart contract's deployed address and ABI
-const CONTRACT_ADDRESS = '0x123abc456def789ghijklmno012pqrs';
+const CONTRACT_ADDRESS = '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984';
 const CONTRACT_ABI = [
   {
     constant: true,
