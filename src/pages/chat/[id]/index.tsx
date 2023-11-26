@@ -5,7 +5,7 @@ import Chat from '../../../pages/chat'; // Adjust the path to point to your Chat
 function LoadingComponent() {
   return (
     <div className='flex min-h-screen items-center justify-center'>
-      Loading...
+      Wait until Loading...
     </div>
   );
 }
@@ -13,6 +13,7 @@ function LoadingComponent() {
 function ChatPage() {
   const router = useRouter();
   const { id } = router.query;
+  console.log('here ist das', id);
 
   return id ? <Chat chatId={id as string} /> : <LoadingComponent />;
 }

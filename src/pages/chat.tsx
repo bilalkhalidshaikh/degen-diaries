@@ -21,8 +21,8 @@ import {
 } from 'firebase/firestore';
 import { setDoc } from 'firebase/firestore';
 import { getDoc, getDocs } from 'firebase/firestore';
-
 import Link from 'next/link';
+import { Loading } from '@components/ui/loading';
 
 const db = getFirestore();
 
@@ -117,8 +117,29 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
       // Check if a chat already exists between the two users
       const chatsCol = collection(db, 'chats');
       const chatsSnapshot = await getDocs(chatsCol);
+      // let chatDoc = chatsSnapshot.docs.find((doc) => {
+      //   const chatData = doc.data();
+      //   // return (
+      //   //   chatData.userIds.includes(user.id) &&
+      //   //   chatData.userIds.includes(otherUserId)
+      //   // );
+      //   return (
+      //     Array.isArray(chatData.userIds) &&
+      //     chatData.userIds.includes(user?.id) &&
+      //     chatData.userIds.includes(otherUserId)
+      //   );
+      // });
       let chatDoc = chatsSnapshot.docs.find((doc) => {
         const chatData = doc.data();
+        console.log('chatData.userIds:', chatData.userIds); // Check the actual value
+        console.log('user.id:', user?.id);
+        console.log('otherUserId:', otherUserId);
+        if (!Array.isArray(chatData.userIds) || !user?.id || !otherUserId) {
+          console.error(
+            'One of the required fields is undefined or not an array.'
+          );
+          return false;
+        }
         return (
           chatData.userIds.includes(user.id) &&
           chatData.userIds.includes(otherUserId)
@@ -139,7 +160,7 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
       // Navigate to the chat
       router.push(`/chat/${chatDoc.id}`);
     } catch (error) {
-      console.error('Error starting chat:', error);
+      console.error('Error in starting chat:', error);
     }
   };
 
@@ -183,7 +204,7 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
   };
 
   if (!chatId) {
-    return <div>Loading...</div>; // You can replace this with a proper loading component
+    return <Loading className='mt-5 w-full' />; // You can replace this with a proper loading component
   }
 
   type MainHeaderProps = {
@@ -195,38 +216,54 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
   const [showChatBox, setShowChatBox] = useState(false);
 
   const handleUserSelect = async (userId) => {
+    if (!user || !user.id) {
+      console.error('Authentication error: User is not defined.');
+      return;
+    }
+
+    if (!userId) {
+      console.error('User ID for the other user is not defined.');
+      return;
+    }
+
     try {
-      // Check if a chat already exists between the two users
       const chatsCol = collection(db, 'chats');
       const chatsSnapshot = await getDocs(chatsCol);
-      let chatDoc = chatsSnapshot.docs.find((doc) => {
+      let chatDocRef;
+
+      const chatDoc = chatsSnapshot.docs.find((doc) => {
         const chatData = doc.data();
         return (
+          Array.isArray(chatData.userIds) &&
           chatData.userIds.includes(user.id) &&
           chatData.userIds.includes(userId)
         );
       });
 
-      // If a chat doesn't exist, create a new one
-      if (!chatDoc) {
-        const newChatData = {
+      if (chatDoc) {
+        chatDocRef = chatDoc.ref;
+      } else {
+        // Create a new chat document
+        const newChatDocRef = doc(collection(db, 'chats'));
+        await setDoc(newChatDocRef, {
           userIds: [user.id, userId],
           createdAt: new Date()
-        };
-        const newChatDocRef = doc(collection(db, 'chats'));
-        await setDoc(newChatDocRef, newChatData);
-        chatDoc = await getDoc(newChatDocRef); // Get the QueryDocumentSnapshot of the new chat document
+        });
+        chatDocRef = newChatDocRef;
       }
 
-      // Set the chat user and show the chat box
+      // Now fetch the chat user details
       const otherUserDoc = await getDoc(doc(db, `users/${userId}`));
+      if (!otherUserDoc.exists()) {
+        console.error('Other user document does not exist.');
+        return;
+      }
+
       setChatUser({ ...otherUserDoc.data(), id: otherUserDoc.id });
       setShowChatBox(true);
-
-      // Navigate to the chat
-      router.push(`/chat/${chatDoc.id}`);
+      router.push(`/chat/${chatDocRef.id}`);
     } catch (error) {
-      console.error('Error starting chat:', error);
+      console.error('Error handling user selection:', error);
     }
   };
 
@@ -244,22 +281,22 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
   // Function to format the date
 
   // Custom styles for chat bubbles and the chat container
-  const chatBubbleStyles = (isCurrentUser: boolean) =>
-    `max-w-xs md:max-w-md lg:max-w-lg break-words rounded-lg p-4 ${
-      isCurrentUser ? 'bg-blue-500 text-white' : 'bg-gray-700 text-gray-300'
-    }`;
-  // Function to delete a chat
-  const deleteChat = async (chatId) => {
-    if (!chatId) return;
+  // const chatBubbleStyles = (isCurrentUser: boolean) =>
+  //   `max-w-xs md:max-w-md lg:max-w-lg break-words rounded-lg p-4 ${
+  //     isCurrentUser ? 'bg-blue-500 text-white' : 'bg-gray-700 text-gray-300'
+  //   }`;
+  // // Function to delete a chat
+  // const deleteChat = async (chatId) => {
+  //   if (!chatId) return;
 
-    try {
-      await deleteDoc(doc(db, 'chats', chatId));
-      console.log(`Chat with ID ${chatId} deleted.`);
-      // You may want to navigate the user away from the chat after deletion
-    } catch (error) {
-      console.error('Error deleting chat:', error);
-    }
-  };
+  //   try {
+  //     await deleteDoc(doc(db, 'chats', chatId));
+  //     console.log(`Chat with ID ${chatId} deleted.`);
+  //     // You may want to navigate the user away from the chat after deletion
+  //   } catch (error) {
+  //     console.error('Error deleting chat:', error);
+  //   }
+  // };
 
   return (
     <>
@@ -330,7 +367,7 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
               <div
                 key={index}
                 className='flex cursor-pointer flex-row items-center space-x-3 border-b border-gray-700 px-2 py-3 pb-2'
-                onClick={() => handleUserSelect(userDetail.id)}
+                onClick={() => handleUserSelect(userDetail?.id)}
               >
                 <img
                   src={
