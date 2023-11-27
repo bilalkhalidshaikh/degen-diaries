@@ -86,7 +86,8 @@ import { useTokenBalances } from '@lib/hooks/useTokenBalances'; // Adjust the pa
 import { StatsEmpty } from '@components/tweet/stats-empty';
 import TokenList from '@components/tweet/TokenList';
 import type { ReactElement, ReactNode } from 'react';
-import { useAccount } from 'wagmi';
+import { useAccount, useBalance } from 'wagmi';
+import React, { useState, useEffect } from 'react';
 
 export default function UserLikes(): JSX.Element {
   const { user } = useUser();
