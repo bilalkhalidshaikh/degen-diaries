@@ -91,65 +91,47 @@ import { Loading } from '@components/ui/loading';
 import { StatsEmpty } from '@components/tweet/stats-empty';
 import type { ReactElement, ReactNode } from 'react';
 import { Button } from '@components/ui/button';
+import { useAccount, useBalance } from 'wagmi';
+import { useAuth } from '@lib/context/web3-auth-context';
 
-export default function UserMedia(): JSX.Element {
+export default function UserMedia() {
   const { user } = useUser();
-  const {
-    initiateCopyTrade,
-    checkCopyTradeStatus,
-    loading: contractLoading
-  } = useSmartContract();
-  const [isCopyTradingActive, setIsCopyTradingActive] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const { address } = useAccount();
+  useEffect(() => {
+    console.log('here is the add ', address);
+  }, [address]);
+  const { data: balanceData, isLoading } = useBalance({
+    address: address
+  });
 
   useEffect(() => {
-    async function fetchCopyTradeStatus() {
-      if (user?.walletAddress) {
-        console.log('Checking copy trade status...');
-        setLoading(true);
-        try {
-          const status = await checkCopyTradeStatus(user.walletAddress);
-          setIsCopyTradingActive(status);
-          console.log('Copy trade status:', status);
-        } catch (error) {
-          console.error('Failed to check copy trade status:', error);
-        }
-        setLoading(false);
-      }
-    }
-    fetchCopyTradeStatus();
-  }, [user?.walletAddress, checkCopyTradeStatus]);
+    // You can do something with the balance data here if needed
+    console.log('here is the bal ', balanceData);
+  }, [balanceData]);
 
-  const handleCopyTradeToggle = async () => {
-    setLoading(true);
-    try {
-      const newStatus = !isCopyTradingActive;
-      await initiateCopyTrade(user.walletAddress, newStatus);
-      setIsCopyTradingActive(newStatus);
-    } catch (error) {
-      console.error('Copy trade toggling failed', error);
-    }
-    setLoading(false);
-  };
+  if (isLoading) {
+    return <Loading />; // Your loading component
+  }
 
-  if (loading || contractLoading) return <Loading />;
+  if (!balanceData?.value) {
+    return (
+      <StatsEmpty
+        title={`${user?.username} doesn't have any coins yet.`}
+        description='When they do, those Coins will show up here.'
+      />
+    );
+  }
+
+  // Format balance for display
+  const formattedBalance = balanceData.formatted;
 
   return (
     <section>
-      <h1>Copy Trade Feature</h1>
-      <Button onClick={handleCopyTradeToggle}>
-        {isCopyTradingActive ? 'Disable Copy Trade' : 'Enable Copy Trade'}
-      </Button>
-      {isCopyTradingActive ? (
-        <p>
-          Copy trade is active. Your trades will be copied by your followers.
-        </p>
-      ) : (
-        <StatsEmpty
-          title='Copy trade is not currently active.'
-          description='Enable the feature to allow your trades to be copied.'
-        />
-      )}
+      <h1>Wallet Balance</h1>
+      <p>
+        {formattedBalance} {balanceData.symbol}
+      </p>
+      {/* Render additional UI components to display ERC-20 and ERC-721 tokens */}
     </section>
   );
 }
