@@ -90,31 +90,42 @@ import { useAccount } from 'wagmi';
 
 export default function UserLikes(): JSX.Element {
   const { user } = useUser();
-  const { address } = useAccount(); // Your wallet address
-  const { erc20Balances, erc721Balances } = useTokenBalances();
-  const { id, name, username } = user ?? {};
+  const { address } = useAccount();
+  useEffect(() => {
+    console.log('here is the add ', address);
+  }, [address]);
+  const { data: balanceData, isLoading } = useBalance({
+    address: address
+  });
 
-  if (
-    (!erc20Balances || erc20Balances.length === 0) &&
-    (!erc721Balances || erc721Balances.length === 0)
-  ) {
+  useEffect(() => {
+    // You can do something with the balance data here if needed
+    console.log('here is the bal ', balanceData);
+  }, [balanceData]);
+
+  if (isLoading) {
+    return <Loading />; // Your loading component
+  }
+
+  if (!balanceData?.value) {
     return (
       <StatsEmpty
-        title={`@${username as string} doesn't have any coins yet.`}
+        title={`${user?.username} doesn't have any coins yet.`}
         description='When they do, those Coins will show up here.'
       />
     );
   }
 
-  // Otherwise, render your TokenList components
+  // Format balance for display
+  const formattedBalance = balanceData.formatted;
+
   return (
     <section>
-      {erc20Balances && erc20Balances.length > 0 && (
-        <TokenList tokens={erc20Balances} title='ERC-20 Tokens' />
-      )}
-      {erc721Balances && erc721Balances.length > 0 && (
-        <TokenList tokens={erc721Balances} title='ERC-721 Tokens' />
-      )}
+      <h1>Wallet Coins</h1>
+      <p>
+        {formattedBalance} {balanceData.symbol}
+      </p>
+      {/* Render additional UI components to display ERC-20 and ERC-721 tokens */}
     </section>
   );
 }
