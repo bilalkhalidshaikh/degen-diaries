@@ -140,7 +140,7 @@ export function LoginMain(): JSX.Element {
             >
               <CustomIcon iconName='GoogleIcon' /> Sign up with Google
             </Button> */}
-            <p className='inner:custom-underline inner:custom-underline text-center text-xs text-light-secondary inner:text-accent-blue dark:text-dark-secondary'>
+            <p className='inner:custom-underline inner:custom-underline text-center text-xs text-white inner:text-accent-blue dark:text-dark-secondary'>
               By signing up, you agree to the{' '}
               <a
                 href='https://twitter.com/tos'
