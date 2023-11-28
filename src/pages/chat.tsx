@@ -298,6 +298,43 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
   //   }
   // };
 
+  // Function to pin a chat
+  // Function to pin/unpin a chat
+  const togglePinChat = async (chatId) => {
+    const chatRef = doc(db, 'chats', chatId);
+    try {
+      const chatSnapshot = await getDoc(chatRef);
+      if (chatSnapshot.exists()) {
+        await updateDoc(chatRef, { pinned: !chatSnapshot.data().pinned });
+      }
+    } catch (error) {
+      console.error('Error toggling pin on chat:', error);
+    }
+  };
+
+  // Function to delete a chat
+  const deleteChat = async (chatId) => {
+    const chatRef = doc(db, 'chats', chatId);
+    try {
+      await deleteDoc(chatRef); // Or updateDoc(chatRef, { deleted: true }) for soft deletion
+    } catch (error) {
+      console.error('Error deleting chat:', error);
+    }
+  };
+
+  // Function to mute/unmute a chat
+  const toggleMuteChat = async (chatId) => {
+    const chatRef = doc(db, 'chats', chatId);
+    try {
+      const chatSnapshot = await getDoc(chatRef);
+      if (chatSnapshot.exists()) {
+        await updateDoc(chatRef, { muted: !chatSnapshot.data().muted });
+      }
+    } catch (error) {
+      console.error('Error toggling mute on chat:', error);
+    }
+  };
+
   return (
     <>
       <SEO title='Chat / Degen Diaries' />
@@ -379,6 +416,26 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
                 />
                 <div className='text-left font-semibold text-gray-300'>
                   {userDetail?.name}
+                </div>
+                <div className='chat-actions'>
+                  <button
+                    onClick={() => togglePinChat(userDetail.id)}
+                    title='Pin/Unpin Chat'
+                  >
+                    📌
+                  </button>
+                  <button
+                    onClick={() => toggleMuteChat(userDetail.id)}
+                    title='Mute/Unmute Chat'
+                  >
+                    🔇
+                  </button>
+                  <button
+                    onClick={() => deleteChat(userDetail.id)}
+                    title='Delete Chat'
+                  >
+                    🗑️
+                  </button>
                 </div>
               </div>
             ))}

@@ -35,10 +35,10 @@ const navLinks: Readonly<NavLink[]> = [
     canBeHidden: true
   },
   {
-    href: '/notifications',
-    linkName: 'Notifications',
-    iconName: 'BellIcon',
-    disabled: true
+    href: '/bookmarks',
+    linkName: 'Bookmarks',
+    iconName: 'BookmarkIcon',
+    canBeHidden: true
   },
   {
     href: '/chat',
