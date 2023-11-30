@@ -70,63 +70,142 @@
 //   </ProtectedLayout>
 // );
 
-import { AnimatePresence } from 'framer-motion';
-import { query, where, orderBy } from 'firebase/firestore';
-import { useCollection } from '@lib/hooks/useCollection';
-import { tweetsCollection } from '@lib/firebase/collections';
+// import { AnimatePresence } from 'framer-motion';
+// import { query, where, orderBy } from 'firebase/firestore';
+// import { useCollection } from '@lib/hooks/useCollection';
+// import { tweetsCollection } from '@lib/firebase/collections';
+// import { useUser } from '@lib/context/user-context';
+// import { UserLayout, ProtectedLayout } from '@components/layout/common-layout';
+// import { MainLayout } from '@components/layout/main-layout';
+// import { SEO } from '@components/common/seo';
+// import { UserDataLayout } from '@components/layout/user-data-layout';
+// import { UserHomeLayout } from '@components/layout/user-home-layout';
+// import { Tweet } from '@components/tweet/tweet';
+// import { Loading } from '@components/ui/loading';
+// import { StatsEmpty } from '@components/tweet/stats-empty';
+// import TokenList from '@components/tweet/TokenList';
+// import type { ReactElement, ReactNode } from 'react';
+// import { useAccount, useBalance } from 'wagmi';
+// import React, { useState, useEffect } from 'react';
+
+// export default function UserLikes(): JSX.Element {
+//   const { user } = useUser();
+//   const { address } = useAccount();
+//   useEffect(() => {
+//     console.log('here is the add ', address);
+//   }, [address]);
+//   const { data: balanceData, isLoading } = useBalance({
+//     address: address
+//   });
+
+//   useEffect(() => {
+//     // You can do something with the balance data here if needed
+//     console.log('here is the bal ', balanceData);
+//   }, [balanceData]);
+
+//   if (isLoading) {
+//     return <Loading />; // Your loading component
+//   }
+
+//   if (!balanceData?.value) {
+//     return (
+//       <StatsEmpty
+//         title={`${user?.username} doesn't have any coins yet.`}
+//         description='When they do, those Coins will show up here.'
+//       />
+//     );
+//   }
+
+//   // Format balance for display
+//   const formattedBalance = balanceData.formatted;
+
+//   return (
+//     <section>
+//       <h1>Wallet Coins</h1>
+//       <p>
+//         {formattedBalance} {balanceData.symbol}
+//       </p>
+//       {/* Render additional UI components to display ERC-20 and ERC-721 tokens */}
+//     </section>
+//   );
+// }
+
+// UserLikes.getLayout = (page: ReactElement): ReactNode => (
+//   <ProtectedLayout>
+//     <MainLayout>
+//       <UserLayout>
+//         <UserDataLayout>
+//           <UserHomeLayout>{page}</UserHomeLayout>
+//         </UserDataLayout>
+//       </UserLayout>
+//     </MainLayout>
+//   </ProtectedLayout>
+// );
+
+import React, { useState, useEffect } from 'react';
 import { useUser } from '@lib/context/user-context';
+import { useAccount, useBalance } from 'wagmi';
+import { Loading } from '@components/ui/loading';
+import { StatsEmpty } from '@components/tweet/stats-empty';
+import type { ReactElement, ReactNode } from 'react';
 import { UserLayout, ProtectedLayout } from '@components/layout/common-layout';
 import { MainLayout } from '@components/layout/main-layout';
 import { SEO } from '@components/common/seo';
 import { UserDataLayout } from '@components/layout/user-data-layout';
 import { UserHomeLayout } from '@components/layout/user-home-layout';
-import { Tweet } from '@components/tweet/tweet';
-import { Loading } from '@components/ui/loading';
-import { useTokenBalances } from '@lib/hooks/useTokenBalances'; // Adjust the path as necessary
-import { StatsEmpty } from '@components/tweet/stats-empty';
-import TokenList from '@components/tweet/TokenList';
-import type { ReactElement, ReactNode } from 'react';
-import { useAccount, useBalance } from 'wagmi';
-import React, { useState, useEffect } from 'react';
 
 export default function UserLikes(): JSX.Element {
   const { user } = useUser();
   const { address } = useAccount();
-  useEffect(() => {
-    console.log('here is the add ', address);
-  }, [address]);
-  const { data: balanceData, isLoading } = useBalance({
-    address: address
-  });
+  const [isLoading, setLoading] = useState(true);
+  const [tokenBalances, setTokenBalances] = useState([]);
+
+  // Define a list of ERC-20 tokens you want to display (with their contract addresses)
+  const tokens = [
+    { name: 'Token1', address: address }, // Replace with actual token names and addresses
+    { name: 'Token2', address: address }
+    // ... add more tokens as needed
+  ];
 
   useEffect(() => {
-    // You can do something with the balance data here if needed
-    console.log('here is the bal ', balanceData);
-  }, [balanceData]);
+    const fetchBalances = async () => {
+      if (address) {
+        const balances = await Promise.all(
+          tokens.map((token) =>
+            useBalance({
+              address: address,
+              token: token.address
+            })
+          )
+        );
+        setTokenBalances(balances);
+        setLoading(false);
+      }
+    };
+
+    fetchBalances();
+  }, [address, tokens]);
 
   if (isLoading) {
-    return <Loading />; // Your loading component
+    return <Loading />;
   }
-
-  if (!balanceData?.value) {
-    return (
-      <StatsEmpty
-        title={`${user?.username} doesn't have any coins yet.`}
-        description='When they do, those Coins will show up here.'
-      />
-    );
-  }
-
-  // Format balance for display
-  const formattedBalance = balanceData.formatted;
 
   return (
     <section>
-      <h1>Wallet Coins</h1>
-      <p>
-        {formattedBalance} {balanceData.symbol}
-      </p>
-      {/* Render additional UI components to display ERC-20 and ERC-721 tokens */}
+      <h1>{`${user?.username}'s Wallet Coins`}</h1>
+      {tokenBalances.length > 0 ? (
+        tokenBalances.map((balance, index) => (
+          <p key={index}>
+            {tokens[index].name}: {balance.data?.formatted}{' '}
+            {balance.data?.symbol}
+          </p>
+        ))
+      ) : (
+        <StatsEmpty
+          title={`${user?.username} doesn't have any ERC-20 tokens yet.`}
+          description='When they do, those tokens will show up here.'
+        />
+      )}
     </section>
   );
 }

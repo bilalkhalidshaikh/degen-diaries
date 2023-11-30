@@ -417,7 +417,7 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
                 <div className='text-left font-semibold text-gray-300'>
                   {userDetail?.name}
                 </div>
-                <div className='chat-actions'>
+                {/* <div className='chat-actions'>
                   <button
                     onClick={() => togglePinChat(userDetail.id)}
                     title='Pin/Unpin Chat'
@@ -436,7 +436,7 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
                   >
                     🗑️
                   </button>
-                </div>
+                </div> */}
               </div>
             ))}
           </div>

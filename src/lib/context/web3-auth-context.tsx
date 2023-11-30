@@ -30,6 +30,11 @@ import { useWeb3Modal } from '@web3modal/wagmi/react';
 import { serverTimestamp } from 'firebase/firestore';
 import { getValidUrl } from './../../lib/context/url'; // replace with the actual path to your utility function
 import { useWeb3ModalState } from '@web3modal/wagmi/react';
+import {
+  signInWithPopup,
+  GoogleAuthProvider,
+  signOut as firebaseSignOut
+} from 'firebase/auth';
 
 // import { useEnsAvatar } from 'wagmi';
 
@@ -58,6 +63,7 @@ type AuthContext = {
   signOut: () => Promise<void>;
   connectWithWallet: () => Promise<void>;
   disconnectWallet: () => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
   connector: Connector | null; // Add connector here
 };
 
@@ -86,102 +92,156 @@ export function Web3AuthContextProvider({
   const [loading, setLoading] = useState(true);
   const [authUser, setAuthUser] = useState<AuthUser | null>(null);
 
-  useEffect(() => {
-    const manageUser = async (): Promise<void> => {
-      if (!address) {
-        console.error('Address is undefined');
-        setLoading(false);
-        return;
-      }
+  const manageUser = async (
+    userId: string,
+    isWeb3: boolean,
+    authUser?: AuthUser | null
+  ): Promise<void> => {
+    // if (!address) {
+    //   console.error('Address is undefined');
+    //   setLoading(false);
+    //   return;
+    // }
+    // For Web3 users, check if address is present
+    if (isWeb3 && !address) {
+      console.error('Address is undefined');
+      setLoading(false);
+      return;
+    }
+    // For Google users, use the UID from the authUser
+    const userRefId = isWeb3 ? address : userId; // For Google users, userId is the UID from Firebase
 
-      console.log('manageUser called with address:', address);
+    console.log('manageUser called with userID:', userRefId);
 
-      const userSnapshot = await getDoc(doc(usersCollection, address));
+    console.log('manageUser called with address:', address);
+    if (!userRefId || typeof userRefId !== 'string') {
+      console.error('Invalid user reference ID:', userRefId);
+      setLoading(false);
+      return;
+    }
 
-      async function getValidUrl(address: string): Promise<string | null> {
-        if (!address) return null;
+    // const userSnapshot = await getDoc(doc(usersCollection, address));
+    const userSnapshot = await getDoc(doc(usersCollection, userRefId));
 
-        // Construct a valid URL using the address
-        const url = `https://source.boringavatars.com/${address}`;
+    async function getValidUrl(address: string): Promise<string | null> {
+      if (!address) return null;
 
-        try {
-          const response = await fetch(url);
-          if (!response.ok) {
-            // If the response is not ok, return a default avatar URL
-            return 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSUTLhfdkuzPiOnl9wfnneG9l-bOM-YR53JCQ&usqp=CAU';
-          }
-          return url;
-        } catch (error) {
-          console.error('Error fetching avatar:', error);
-          // In case of an error, return a default avatar URL
+      // Construct a valid URL using the address
+      const url = `https://source.boringavatars.com/${address}`;
+
+      try {
+        const response = await fetch(url);
+        if (!response.ok) {
+          // If the response is not ok, return a default avatar URL
           return 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSUTLhfdkuzPiOnl9wfnneG9l-bOM-YR53JCQ&usqp=CAU';
         }
+        return url;
+      } catch (error) {
+        console.error('Error fetching avatar:', error);
+        // In case of an error, return a default avatar URL
+        return 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSUTLhfdkuzPiOnl9wfnneG9l-bOM-YR53JCQ&usqp=CAU';
       }
+    }
 
-      if (!userSnapshot.exists()) {
-        console.log('User does not exist, creating...');
+    if (!userSnapshot.exists()) {
+      console.log('User does not exist, creating...');
 
-        const validPhotoURL = getValidUrl(address);
+      const validPhotoURL = getValidUrl(address);
 
-        const userData: WithFieldValue<User> = {
-          id: address, // Use wallet address as the user ID
-          bio: null,
-          name: 'User Name', // Update this with the correct value
-          theme: null,
-          accent: null,
-          website: null,
-          location: null,
-          // photoURL: `https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSUTLhfdkuzPiOnl9wfnneG9l-bOM-YR53JCQ&usqp=CAU`,
-          photoURL: validPhotoURL,
-          username: address, // Set the username to the wallet address
-          verified: false,
-          following: [],
-          followers: [],
-          createdAt: serverTimestamp(),
-          updatedAt: null,
-          totalTweets: 0,
-          totalPhotos: 0,
-          pinnedTweet: null,
-          coverPhotoURL: null
-        };
+      const userData: WithFieldValue<User> = {
+        id: userId,
+        bio: null,
+        name: isWeb3 ? 'Web3 User' : authUser?.displayName || 'Google User',
+        photoURL: isWeb3 ? await getValidUrl(userId) : authUser?.photoURL || '',
+        username: isWeb3 ? userId : authUser?.email || '',
+        theme: null,
+        accent: null,
+        website: null,
+        location: null,
+        verified: false,
+        following: [],
+        followers: [],
+        createdAt: serverTimestamp(),
+        updatedAt: null,
+        totalTweets: 0,
+        totalPhotos: 0,
+        pinnedTweet: null,
+        coverPhotoURL: null
+      };
+      // const userData: WithFieldValue<User> = {
+      //   id: address, // Use wallet address as the user ID
+      //   bio: null,
+      //   name: 'User Name', // Update this with the correct value
+      //   theme: null,
+      //   accent: null,
+      //   website: null,
+      //   location: null,
+      //   // photoURL: `https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSUTLhfdkuzPiOnl9wfnneG9l-bOM-YR53JCQ&usqp=CAU`,
+      //   photoURL: validPhotoURL,
+      //   username: address, // Set the username to the wallet address
+      //   verified: false,
+      //   following: [],
+      //   followers: [],
+      //   createdAt: serverTimestamp(),
+      //   updatedAt: null,
+      //   totalTweets: 0,
+      //   totalPhotos: 0,
+      //   pinnedTweet: null,
+      //   coverPhotoURL: null
+      // };
 
-        const userStatsData: WithFieldValue<Stats> = {
-          likes: [],
-          tweets: [],
-          updatedAt: null
-        };
+      const userStatsData: WithFieldValue<Stats> = {
+        likes: [],
+        tweets: [],
+        updatedAt: null
+      };
 
-        try {
-          await Promise.all([
-            setDoc(doc(usersCollection, address), userData), // Store using wallet address as the document ID
-            setDoc(doc(userStatsCollection(address), 'stats'), userStatsData)
-          ]);
+      try {
+        await Promise.all([
+          setDoc(doc(usersCollection, address), userData), // Store using wallet address as the document ID
+          setDoc(doc(userStatsCollection(address), 'stats'), userStatsData)
+        ]);
 
-          const newUser = (await getDoc(doc(usersCollection, address))).data();
-          setUser(newUser as User);
-          console.log('User created successfully');
-        } catch (error) {
-          console.error('Error creating user:', error);
-          setError(error as Error);
-        }
-      } else {
-        const userData = userSnapshot.data();
-        // Check if the existing photoURL is valid, if not, update it to a valid URL
-        // Check if the existing photoURL is valid, if not, update it to a valid URL
-        if (!userData.photoURL || userData.photoURL === 'Photo URL') {
-          userData.photoURL = getValidUrl(address);
-        }
-        setUser(userData);
+        const newUser = (await getDoc(doc(usersCollection, address))).data();
+        setUser(newUser as User);
+        console.log('User created successfully');
+      } catch (error) {
+        console.error('Error creating user:', error);
+        setError(error as Error);
       }
+    } else {
+      const userData = userSnapshot.data();
+      // Check if the existing photoURL is valid, if not, update it to a valid URL
+      // Check if the existing photoURL is valid, if not, update it to a valid URL
+      if (!userData.photoURL || userData.photoURL === 'Photo URL') {
+        userData.photoURL = getValidUrl(address);
+      }
+      setUser(userData);
+    }
 
-      setLoading(false);
-    };
-
+    setLoading(false);
+  };
+  useEffect(() => {
     if (address) {
-      manageUser();
+      manageUser(address, true);
     }
   }, [address]); // Include address as a dependency for useEffect
   // Include address as a dependency for useEffect
+  // useEffect(() => {
+  //   if (address) {
+  //     manageUser(address, true);
+  //   }
+  // }, [address]);
+  useEffect(() => {
+    return onAuthStateChanged(auth, (firebaseUser) => {
+      if (firebaseUser) {
+        manageUser(firebaseUser.uid, false, firebaseUser);
+      } else {
+        setUser(null);
+      }
+      setLoading(false);
+    });
+  }, []);
 
   useEffect(() => {
     let unsubscribeFromAuth: firebase.Unsubscribe;
@@ -210,7 +270,7 @@ export function Web3AuthContextProvider({
   // const web3Modal = useContext(Web3ModalContext);
 
   // const { open, close } = web3Modal
-  //   ? useWeb3Modal()
+  // ? useWeb3Modal()
   //   : { open: () => {}, close: () => {} };
 
   const { open, close } = useWeb3Modal();
@@ -251,25 +311,52 @@ export function Web3AuthContextProvider({
 
   const disconnectWallet = async (): Promise<void> => {
     try {
-      close(); // Close the web3 modal
+      await close(); // Close the web3 modal
+      console.log('Disconnected..');
     } catch (error) {
       setError(error as Error);
+      console.log('error while Disconnecting..', error);
     }
   };
 
   const isAdmin = user ? user.username === 'ccrsxx' : false;
   const randomSeed = useMemo(getRandomId, [user?.id]);
 
+  // const signOut = async (): Promise<void> => {
+  //   try {
+  //     // Disconnect the wallet
+  //     if (actualConnector) {
+  //       await disconnectWallet();
+  //     }
+  //     // Reset the user state to null
+  //     setUser(null);
+  //   } catch (error) {
+  //     setError(error as Error);
+  //   }
+  // };
+
+  // Function to handle sign in with Google
+  const signInWithGoogle = async () => {
+    const provider = new GoogleAuthProvider();
+    try {
+      const result = await signInWithPopup(auth, provider);
+      manageUser(result.user.uid, false, result.user);
+    } catch (err) {
+      setError(err as Error);
+    }
+  };
+
   const signOut = async (): Promise<void> => {
     try {
-      // Disconnect the wallet
-      if (actualConnector) {
+      await firebaseSignOut(auth);
+      if (connector) {
         await disconnectWallet();
       }
-      // Reset the user state to null
       setUser(null);
-    } catch (error) {
-      setError(error as Error);
+      console.log('Disconnected..');
+    } catch (err) {
+      setError(err as Error);
+      console.log('error while Disconnecting', err);
     }
   };
 
@@ -283,6 +370,7 @@ export function Web3AuthContextProvider({
     signOut,
     connectWithWallet,
     disconnectWallet,
+    signInWithGoogle,
     connector: actualConnector // Use the connector or null
   };
 
