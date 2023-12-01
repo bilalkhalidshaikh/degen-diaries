@@ -40,7 +40,13 @@ type User = {
   isMuted?: boolean;
   isDeleted?: boolean;
 };
-
+// Utility function to check if the device is mobile
+function isMobileDevice() {
+  return (
+    typeof window.orientation !== 'undefined' ||
+    navigator.userAgent.indexOf('IEMobile') !== -1
+  );
+}
 export default function Chat({ chatId }: { chatId: string }): JSX.Element {
   const router = useRouter();
   // const { id } = router.query; // Remove this line
@@ -657,15 +663,16 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
     chatId: ''
   });
   const showContextMenu = (e, chatId) => {
-    e.preventDefault();
-    e.stopPropagation(); // Add this line to stop the event from bubbling up
-
-    setContextMenu({
-      visible: true,
-      x: e.clientX,
-      y: e.clientY,
-      chatId: chatId // Set the chatId here
-    });
+    if (!isMobileDevice()) {
+      e.preventDefault();
+      e.stopPropagation();
+      setContextMenu({
+        visible: true,
+        x: e.clientX,
+        y: e.clientY,
+        chatId: chatId
+      });
+    }
   };
 
   // Hide context menu when clicking anywhere in the document
@@ -817,8 +824,8 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
 
               return (
                 <div
-                  key={userDetail.id} // Use user ID as the unique key
-                  className='flex cursor-pointer flex-row items-center space-x-3 border-b border-gray-700 px-2 py-3 pb-2'
+                  key={userDetail.id}
+                  className='non-selectable flex cursor-pointer flex-row items-center space-x-3 border-b border-gray-700 px-2 py-3 pb-2' // Apply the no-select class here
                   onClick={() => handleUserSelect(userDetail?.id)}
                   onContextMenu={(e) => showContextMenu(e, userDetail?.id)}
                   {...longPressEvent}
@@ -828,26 +835,32 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
                       userDetail?.photoURL ||
                       'https://source.unsplash.com/random/600x600'
                     }
-                    className='h-12 w-12 rounded-full object-cover'
+                    className='non-selectable h-12 w-12 rounded-full object-cover'
                     alt='User Avatar'
                   />
 
-                  <div className='text-left font-semibold text-gray-300'>
+                  <div className='non-selectable text-left font-semibold text-gray-300'>
                     {userDetail?.name}
                   </div>
                   {/* Mute Icon */}
                   {/* Pin Icon */}
-                  {userDetail.isPinned && <span className='pin-icon'>📌</span>}
-                  {userDetail.isMuted && <span className='mute-icon'>🔇</span>}
+                  {userDetail.isPinned && (
+                    <span className='pin-icon non-selectable'>📌</span>
+                  )}
+                  {userDetail.isMuted && (
+                    <span className='mute-icon non-selectable'>🔇</span>
+                  )}
                   {/* {userDetail.isMuted && <span className='mute-icon'>🔇</span>} */}
-                  <ChatContextMenu
-                    x={contextMenu.x}
-                    y={contextMenu.y}
-                    visible={contextMenu.visible}
-                    onPin={() => handlePinChat(contextMenu.chatId)}
-                    onMute={() => handleMuteChat(contextMenu.chatId)}
-                    onDelete={() => handleDeleteChat(contextMenu.chatId)}
-                  />
+                  {!isMobileDevice() && (
+                    <ChatContextMenu
+                      x={contextMenu.x}
+                      y={contextMenu.y}
+                      visible={contextMenu.visible}
+                      onPin={() => handlePinChat(contextMenu.chatId)}
+                      onMute={() => handleMuteChat(contextMenu.chatId)}
+                      onDelete={() => handleDeleteChat(contextMenu.chatId)}
+                    />
+                  )}
 
                   {/* <div className='chat-actions'>
                   <button
