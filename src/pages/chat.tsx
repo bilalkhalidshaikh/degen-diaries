@@ -36,6 +36,9 @@ type User = {
   name?: any;
   imgSrc?: any;
   photoURL?: any; // Add this line to include the photoURL property
+  isPinned?: boolean;
+  isMuted?: boolean;
+  isDeleted?: boolean;
 };
 
 export default function Chat({ chatId }: { chatId: string }): JSX.Element {
@@ -48,6 +51,8 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
   const [message, setMessage] = useState<string>('');
   const [users, setUsers] = useState<User[]>([]);
   const [chatUser, setChatUser] = useState<User | null>(null);
+  const [chatStates, setChatStates] = useState(new Map());
+  const [showActionBar, setShowActionBar] = useState(false);
 
   useEffect(() => {
     if (!chatId && users.length > 0) {
@@ -161,7 +166,6 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
         await setDoc(newChatDocRef, newChatData);
         chatDoc = await getDoc(newChatDocRef); // Get the QueryDocumentSnapshot of the new chat document
       }
-
       // Navigate to the chat
       router.push(`/chat/${chatDoc.id}`);
     } catch (error) {
@@ -221,6 +225,8 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
   const [showChatBox, setShowChatBox] = useState(false);
 
   const handleUserSelect = async (userId) => {
+    console.log(`handleUserSelect called with userId: ${userId}`);
+
     if (!user || !user.id) {
       console.error('Authentication error: User is not defined.');
       return;
@@ -271,12 +277,24 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
       console.error('Error handling user selection:', error);
     }
   };
+  useEffect(() => {
+    console.log(`showChatBox changed: ${showChatBox}`);
+  }, [showChatBox]);
 
   const handleBackToUsers = () => {
     setShowChatBox(false);
   };
 
   const BackArrowIcon = () => <span>←</span>; // Replace this with your actual back arrow icon
+  const fetchAndUpdateUsers = async () => {
+    const userCol = collection(db, 'users');
+    const userSnapshot = await getDocs(userCol);
+    const userList = userSnapshot.docs.map((doc) => ({
+      ...doc.data(),
+      id: doc.id
+    }));
+    setUsers(userList); // Assuming setUsers is your state updating function
+  };
 
   const [searchTerm, setSearchTerm] = useState('');
   const filteredUsers = users.filter((user) =>
@@ -306,44 +324,155 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
   // Function to pin a chat
   // Function to pin/unpin a chat
 
+  // const togglePinChat = async (chatId) => {
+  //   try {
+  //     const chatRef = doc(db, 'chats', chatId);
+  //     const chatDoc = await getDoc(chatRef);
+  //     const isPinned = chatDoc.data()?.pinned || false;
+
+  //     // Update Firestore
+  //     await updateDoc(chatRef, { isPinned: !isPinned });
+
+  //     // Update local state to reflect UI change
+  //     setUsers((prevUsers) => {
+  //       return [...prevUsers]
+  //         .sort((a, b) => {
+  //           if (b.isPinned && !a.isPinned) return 1;
+  //           if (a.isPinned && !b.isPinned) return -1;
+  //           return 0;
+  //         });
+  //     });
+
+  //   } catch (error) {
+  //     console.error('Error toggling pin:', error);
+  //      // Provide user feedback
+  //   toast.error('Error pinning chat');
+  //   }
+  // };
   const togglePinChat = async (chatId) => {
     try {
       const chatRef = doc(db, 'chats', chatId);
       const chatDoc = await getDoc(chatRef);
-      const isPinned = chatDoc.data()?.pinned || false;
+      const isPinned = chatDoc.data()?.isPinned || false;
 
-      await updateDoc(chatRef, {
-        pinned: !isPinned
+      await updateDoc(doc(db, 'users', chatId), { isPinned: !isPinned });
+      console.log(`Chat ${chatId} pin status updated to: ${!isPinned}`);
+
+      // Fetch and update the state with the latest data
+      fetchAndUpdateUsers(); // Make sure this function re-fetches users and updates the state
+
+      // Update local state to reflect UI change
+      setUsers((prevUsers) => {
+        // Apply the pinning change to the specific user
+        const updatedUsers = prevUsers.map((chat) =>
+          chat.id === chatId ? { ...chat, isPinned: !isPinned } : chat
+        );
+        // Sort users to move pinned chats to the top
+        return updatedUsers.sort((a, b) => {
+          if (a.isPinned && !b.isPinned) {
+            return -1;
+          }
+          if (!a.isPinned && b.isPinned) {
+            return 1;
+          }
+          return 0;
+        });
       });
-      console.log(`Chat ${isPinned ? 'unpinned' : 'pinned'}`);
+
+      // toast.success('Chat pin status updated successfully');
     } catch (error) {
       console.error('Error toggling pin:', error);
+      toast.error('Error pinning chat');
     }
   };
 
-  const toggleMuteChat = async (chatId: string) => {
-    const chatRef = doc(db, 'chats', chatId);
-    // Get the current chat document to check if it's muted or not
-    const chatDoc = await getDoc(chatRef);
-    const isMuted = chatDoc.data()?.muted || false;
+  // const toggleMuteChat = async (chatId) => {
+  //   try {
+  //     const chatRef = doc(db, 'chats', chatId);
+  //     const chatDoc = await getDoc(chatRef);
+  //     const isMuted = chatDoc.data()?.muted || false;
 
-    await updateDoc(chatRef, {
-      muted: !isMuted // Toggle the mute status
+  //     await updateDoc(chatRef, { muted: !isMuted });
+
+  //     // Update local state
+  //     setUsers((prevUsers) =>
+  //       prevUsers.map((user) =>
+  //         user.id === chatId ? { ...user, isMuted: !isMuted } : user
+  //       )
+  //     );
+  //   } catch (error) {
+  //     console.error('Error toggling mute:', error);
+  //   }
+  // };
+  const toggleMuteChat = async (chatId) => {
+    try {
+      const chatRef = doc(db, 'chats', chatId);
+      const chatDoc = await getDoc(chatRef);
+      const isMuted = chatDoc.data()?.isMuted || false;
+
+      // Update Firestore
+      await updateDoc(doc(db, 'users', chatId), { isMuted: !isMuted });
+
+      // Update local state
+      setUsers((prevUsers) =>
+        prevUsers.map((chat) =>
+          chat.id === chatId ? { ...chat, isMuted: !isMuted } : chat
+        )
+      );
+
+      // toast.success('Chat mute status updated successfully');
+    } catch (error) {
+      console.error('Error toggling mute:', error);
+      toast.error('Error muting chat');
+    }
+  };
+
+  // const deleteChat = async (chatId) => {
+  //   try {
+  //     const chatRef = doc(db, 'chats', chatId);
+  //     await deleteDoc(chatRef);
+
+  //     // Update local state to mark the chat as deleted
+  //     setUsers((prevUsers) =>
+  //       prevUsers.map((user) =>
+  //         user.id === chatId ? { ...user, isDeleted: true } : user
+  //       )
+  //     );
+  //   } catch (error) {
+  //     console.error('Error deleting chat:', error);
+  //   }
+  // };
+
+  const deleteChat = async (chatId) => {
+    try {
+      const chatRef = doc(db, 'chats', chatId);
+
+      // Update Firestore
+      await updateDoc(doc(db, 'users', chatId), { isDeleted: true });
+
+      // Update local state to remove the chat
+      setUsers((prevUsers) => prevUsers.filter((chat) => chat.id !== chatId));
+
+      toast.success('Chat deleted successfully');
+    } catch (error) {
+      console.error('Error deleting chat:', error);
+      toast.error('Error deleting chat');
+    }
+  };
+
+  const sortUsers = (users) => {
+    return users.sort((a, b) => {
+      return (b.isPinned ? 1 : 0) - (a.isPinned ? 1 : 0);
     });
   };
 
-  const deleteChat = async (chatId: string) => {
-    const chatRef = doc(db, 'chats', chatId);
-    await deleteDoc(chatRef);
-  };
-
   // Long press handlers
-  const onLongPress = (event: Event) => {
-    event.preventDefault();
-    // Show chat options here (e.g., using a modal or context menu)
-    console.log('Long press detected on chat', chatId);
-    // You would show options to pin, mute, or delete the chat
-  };
+  // const onLongPress = (event: Event) => {
+  //   event.preventDefault();
+  //   // Show chat options here (e.g., using a modal or context menu)
+  //   console.log('Long press detected on chat', chatId);
+  //   // You would show options to pin, mute, or delete the chat
+  // };
 
   const onClick = () => {
     // Handle the click event
@@ -352,12 +481,42 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
 
   // const longPressEvent = useLongPress(onLongPress, onClick);
 
+  // This function will update the local state for a specific chat ID.
+  const updateChatState = (chatId, updates) => {
+    setChatStates((prevStates) => {
+      const newState = new Map(prevStates);
+      newState.set(chatId, { ...(newState.get(chatId) || {}), ...updates });
+      return newState;
+    });
+  };
+
   // Chat action functions
   const handlePinChat = async (chatIdToPin) => {
     if (!chatIdToPin) {
       console.error('No chat ID provided for pinning.');
       return;
     }
+    const currentChatState = chatStates.get(chatId) || {};
+    const isPinned = currentChatState.isPinned || false;
+    updateChatState(chatId, { isPinned: !isPinned });
+    const currentChat = users.find((user) => user.id === chatIdToPin);
+    if (!currentChat) return;
+
+    const newStatus = !currentChat.isPinned;
+    updateChatState(chatIdToPin, { isPinned: newStatus });
+    // Immediately update UI after pinning
+    setUsers((prevUsers) => {
+      return prevUsers
+        .map((user) => {
+          if (user.id === chatIdToPin) {
+            return { ...user, isPinned: !user.isPinned };
+          }
+          return user;
+        })
+        .sort((a, b) => {
+          return (b.isPinned ? 1 : 0) - (a.isPinned ? 1 : 0);
+        });
+    });
     await togglePinChat(chatIdToPin);
     toast.success('Chat pinned successfully');
   };
@@ -367,18 +526,41 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
       console.error('No chat ID provided for muting.');
       return;
     }
-    await toggleMuteChat(chatIdToMute);
-    toast.success('Chat muted successfully');
+    const currentChatState = chatStates.get(chatId) || {};
+    const isMuted = currentChatState.isMuted || false;
+    updateChatState(chatId, { isMuted: !isMuted });
+    const currentChat = users.find((user) => user.id === chatIdToMute);
+    if (!currentChat) return;
+
+    const newStatus = !currentChat.isMuted;
+
+    await toggleMuteChat(chatIdToMute); // Assuming this updates Firestore
+
+    // After muting, update and sort the user list
+    setUsers((prevUsers) => {
+      const updatedUsers = prevUsers.map((chat) =>
+        chat.id === chatIdToMute ? { ...chat, isMuted: newStatus } : chat
+      );
+      return sortUsers(updatedUsers); // Sort the updated user list
+    });
   };
 
   const handleDeleteChat = async (chatIdToDelete) => {
     if (!chatIdToDelete) {
       console.error('No chat ID provided for deleting.');
-      toast.success('Chat deleted successfully');
-
       return;
     }
-    await deleteChat(chatIdToDelete);
+
+    await deleteChat(chatIdToDelete); // Assuming this updates Firestore
+    updateChatState(chatId, { isDeleted: true });
+
+    // After deleting, update and sort the user list
+    setUsers((prevUsers) => {
+      const updatedUsers = prevUsers.filter(
+        (chat) => chat.id !== chatIdToDelete
+      );
+      return sortUsers(updatedUsers); // Sort the updated user list
+    });
   };
 
   // Add this function within your Chat component
@@ -421,6 +603,12 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
   const ChatContextMenu = ({ x, y, onPin, onMute, onDelete, visible }) => {
     if (!visible) return null;
 
+    const handleClick = (action, e) => {
+      e.stopPropagation(); // Prevent event from bubbling up
+      action();
+      hideContextMenu(); // Hide context menu after action
+    };
+
     return (
       <div
         style={{
@@ -439,13 +627,22 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
             boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
           }}
         >
-          <li style={{ padding: '5px' }} onClick={onPin}>
+          <li
+            style={{ padding: '5px' }}
+            onClick={(e) => handleClick(() => onPin(), e)}
+          >
             Pin
           </li>
-          <li style={{ padding: '5px' }} onClick={onMute}>
+          <li
+            style={{ padding: '5px' }}
+            onClick={(e) => handleClick(() => onMute(), e)}
+          >
             Mute
           </li>
-          <li style={{ padding: '5px' }} onClick={onDelete}>
+          <li
+            style={{ padding: '5px' }}
+            onClick={(e) => handleClick(() => onDelete(), e)}
+          >
             Delete
           </li>
         </ul>
@@ -459,14 +656,15 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
     y: 0,
     chatId: ''
   });
-
   const showContextMenu = (e, chatId) => {
     e.preventDefault();
+    e.stopPropagation(); // Add this line to stop the event from bubbling up
+
     setContextMenu({
       visible: true,
       x: e.clientX,
       y: e.clientY,
-      chatId
+      chatId: chatId // Set the chatId here
     });
   };
 
@@ -482,9 +680,62 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
   };
 
   const longPressEvent = useLongPress(
-    (e) => showContextMenu(e, chatId), // For long press
-    () => {} // For click, currently not needed
+    (e) => showContextMenu(e, chatId),
+    onClick, // Handle regular click
+    { delay: 500 } // Customize delay for long press
   );
+
+  const onLongPress = (chatId) => {
+    setShowActionBar(true);
+    setContextMenu({ ...contextMenu, chatId });
+  };
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const userCol = collection(db, 'users');
+        const userSnapshot = await getDocs(userCol);
+        const userList = userSnapshot.docs.map((doc) => ({
+          ...doc.data(),
+          id: doc.id
+        }));
+        const sortedUsers = sortUsers(userList); // Sort users after fetching
+        setUsers(sortedUsers);
+      } catch (error) {
+        console.error('Error fetching users:', error);
+      }
+    };
+
+    fetchUsers();
+  }, [user]); // Dependency array
+
+  const TopActionBar = ({ onPin, onMute, onDelete }) => {
+    return (
+      <div className='fixed bottom-10 left-1/2 z-50 flex -translate-x-1/2 transform items-center justify-around rounded bg-gray-800 p-2 shadow-md'>
+        <button onClick={onPin} className='focus:outline-none'>
+          <img
+            src='https://cdn-icons-png.flaticon.com/512/1828/1828911.png'
+            alt='Pin'
+            className='h-6 w-6'
+          />
+        </button>
+        <button onClick={onMute} className='focus:outline-none'>
+          <img
+            src='https://cdn-icons-png.flaticon.com/512/1828/1828970.png'
+            alt='Mute'
+            className='h-6 w-6'
+          />
+        </button>
+        <button onClick={onDelete} className='focus:outline-none'>
+          <img
+            src='https://cdn-icons-png.flaticon.com/512/1214/1214428.png'
+            alt='Delete'
+            className='h-6 w-6'
+          />
+        </button>
+      </div>
+    );
+  };
 
   return (
     <>
@@ -550,38 +801,55 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
             <div className='w-10' /> {/* Spacer div for centering the title */}
           </div>
         )}
+        {showActionBar && (
+          <TopActionBar
+            onPin={() => handlePinChat(contextMenu.chatId)}
+            onMute={() => handleMuteChat(contextMenu.chatId)}
+            onDelete={() => handleDeleteChat(contextMenu.chatId)}
+          />
+        )}
         {/* Chat List */}
         {!showChatBox && (
           <div className='flex h-full w-full flex-col overflow-y-auto border-r border-gray-700 p-4 md:w-1/4'>
-            {users.map((userDetail, index) => (
-              <div
-                key={index}
-                className='flex cursor-pointer flex-row items-center space-x-3 border-b border-gray-700 px-2 py-3 pb-2'
-                onClick={() => handleUserSelect(userDetail?.id)}
-                onContextMenu={(e) => showContextMenu(e, chatId)}
-                {...longPressEvent}
-              >
-                <img
-                  src={
-                    userDetail?.photoURL ||
-                    'https://source.unsplash.com/random/600x600'
-                  }
-                  className='h-12 w-12 rounded-full object-cover'
-                  alt='User Avatar'
-                />
-                <div className='text-left font-semibold text-gray-300'>
-                  {userDetail?.name}
-                </div>
-                <ChatContextMenu
-                  x={contextMenu.x}
-                  y={contextMenu.y}
-                  visible={contextMenu.visible}
-                  onPin={() => handlePinChat(contextMenu.chatId)}
-                  onMute={() => handleMuteChat(contextMenu.chatId)}
-                  onDelete={() => handleDeleteChat(contextMenu.chatId)}
-                />
+            {users.map((userDetail, index) => {
+              const chatState = chatStates.get(userDetail.id) || {};
+              if (chatState.isDeleted) return null; // Skip rendering deleted chats
 
-                {/* <div className='chat-actions'>
+              return (
+                <div
+                  key={userDetail.id} // Use user ID as the unique key
+                  className='flex cursor-pointer flex-row items-center space-x-3 border-b border-gray-700 px-2 py-3 pb-2'
+                  onClick={() => handleUserSelect(userDetail?.id)}
+                  onContextMenu={(e) => showContextMenu(e, userDetail?.id)}
+                  {...longPressEvent}
+                >
+                  <img
+                    src={
+                      userDetail?.photoURL ||
+                      'https://source.unsplash.com/random/600x600'
+                    }
+                    className='h-12 w-12 rounded-full object-cover'
+                    alt='User Avatar'
+                  />
+
+                  <div className='text-left font-semibold text-gray-300'>
+                    {userDetail?.name}
+                  </div>
+                  {/* Mute Icon */}
+                  {/* Pin Icon */}
+                  {userDetail.isPinned && <span className='pin-icon'>📌</span>}
+                  {userDetail.isMuted && <span className='mute-icon'>🔇</span>}
+                  {/* {userDetail.isMuted && <span className='mute-icon'>🔇</span>} */}
+                  <ChatContextMenu
+                    x={contextMenu.x}
+                    y={contextMenu.y}
+                    visible={contextMenu.visible}
+                    onPin={() => handlePinChat(contextMenu.chatId)}
+                    onMute={() => handleMuteChat(contextMenu.chatId)}
+                    onDelete={() => handleDeleteChat(contextMenu.chatId)}
+                  />
+
+                  {/* <div className='chat-actions'>
                   <button
                     onClick={() => togglePinChat(userDetail.id)}
                     title='Pin/Unpin Chat'
@@ -601,8 +869,9 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
                     🗑️
                   </button>
                 </div> */}
-              </div>
-            ))}
+                </div>
+              );
+            })}
           </div>
         )}
 

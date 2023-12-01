@@ -166,7 +166,10 @@ export function Web3AuthContextProvider({
         totalTweets: 0,
         totalPhotos: 0,
         pinnedTweet: null,
-        coverPhotoURL: null
+        coverPhotoURL: null,
+        isPinned: false,
+        isMuted: false,
+        isDeleted: false
       };
       // const userData: WithFieldValue<User> = {
       //   id: address, // Use wallet address as the user ID
@@ -211,12 +214,27 @@ export function Web3AuthContextProvider({
       }
     } else {
       const userData = userSnapshot.data();
+
       // Check if the existing photoURL is valid, if not, update it to a valid URL
       // Check if the existing photoURL is valid, if not, update it to a valid URL
       if (!userData.photoURL || userData.photoURL === 'Photo URL') {
         userData.photoURL = getValidUrl(address);
       }
       setUser(userData);
+      // User already exists
+      const existingUserData = userSnapshot.data();
+
+      // Check if new fields exist, if not, update them
+      const updates = {};
+      if (existingUserData.isPinned === undefined) updates.isPinned = false;
+      if (existingUserData.isMuted === undefined) updates.isMuted = false;
+      if (existingUserData.isDeleted === undefined) updates.isDeleted = false;
+
+      if (Object.keys(updates).length > 0) {
+        await updateDoc(userSnapshot.ref, updates);
+      }
+
+      setUser(existingUserData);
     }
 
     setLoading(false);
