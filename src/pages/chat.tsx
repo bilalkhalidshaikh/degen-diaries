@@ -23,6 +23,11 @@ import { setDoc } from 'firebase/firestore';
 import { getDoc, getDocs } from 'firebase/firestore';
 import Link from 'next/link';
 import { Loading } from '@components/ui/loading';
+import useLongPress from '../lib/hooks/useLongPress'; // Make sure this path is correct
+import { Menu, MenuItem, MenuButton } from '@szhsin/react-menu';
+import '@szhsin/react-menu/dist/index.css';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const db = getFirestore();
 
@@ -300,44 +305,192 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
 
   // Function to pin a chat
   // Function to pin/unpin a chat
+
   const togglePinChat = async (chatId) => {
-    const chatRef = doc(db, 'chats', chatId);
     try {
-      const chatSnapshot = await getDoc(chatRef);
-      if (chatSnapshot.exists()) {
-        await updateDoc(chatRef, { pinned: !chatSnapshot.data().pinned });
-      }
+      const chatRef = doc(db, 'chats', chatId);
+      const chatDoc = await getDoc(chatRef);
+      const isPinned = chatDoc.data()?.pinned || false;
+
+      await updateDoc(chatRef, {
+        pinned: !isPinned
+      });
+      console.log(`Chat ${isPinned ? 'unpinned' : 'pinned'}`);
     } catch (error) {
-      console.error('Error toggling pin on chat:', error);
+      console.error('Error toggling pin:', error);
     }
   };
 
-  // Function to delete a chat
-  const deleteChat = async (chatId) => {
+  const toggleMuteChat = async (chatId: string) => {
     const chatRef = doc(db, 'chats', chatId);
-    try {
-      await deleteDoc(chatRef); // Or updateDoc(chatRef, { deleted: true }) for soft deletion
-    } catch (error) {
-      console.error('Error deleting chat:', error);
+    // Get the current chat document to check if it's muted or not
+    const chatDoc = await getDoc(chatRef);
+    const isMuted = chatDoc.data()?.muted || false;
+
+    await updateDoc(chatRef, {
+      muted: !isMuted // Toggle the mute status
+    });
+  };
+
+  const deleteChat = async (chatId: string) => {
+    const chatRef = doc(db, 'chats', chatId);
+    await deleteDoc(chatRef);
+  };
+
+  // Long press handlers
+  const onLongPress = (event: Event) => {
+    event.preventDefault();
+    // Show chat options here (e.g., using a modal or context menu)
+    console.log('Long press detected on chat', chatId);
+    // You would show options to pin, mute, or delete the chat
+  };
+
+  const onClick = () => {
+    // Handle the click event
+    console.log('Clicked on chat', chatId);
+  };
+
+  // const longPressEvent = useLongPress(onLongPress, onClick);
+
+  // Chat action functions
+  const handlePinChat = async (chatIdToPin) => {
+    if (!chatIdToPin) {
+      console.error('No chat ID provided for pinning.');
+      return;
+    }
+    await togglePinChat(chatIdToPin);
+    toast.success('Chat pinned successfully');
+  };
+
+  const handleMuteChat = async (chatIdToMute) => {
+    if (!chatIdToMute) {
+      console.error('No chat ID provided for muting.');
+      return;
+    }
+    await toggleMuteChat(chatIdToMute);
+    toast.success('Chat muted successfully');
+  };
+
+  const handleDeleteChat = async (chatIdToDelete) => {
+    if (!chatIdToDelete) {
+      console.error('No chat ID provided for deleting.');
+      toast.success('Chat deleted successfully');
+
+      return;
+    }
+    await deleteChat(chatIdToDelete);
+  };
+
+  // Add this function within your Chat component
+  const onChatAction = (action: 'pin' | 'mute' | 'delete', chatId: string) => {
+    switch (action) {
+      case 'pin':
+        togglePinChat(chatId);
+        break;
+      case 'mute':
+        toggleMuteChat(chatId);
+        break;
+      case 'delete':
+        deleteChat(chatId);
+        break;
+      default:
+        console.error('Invalid action');
     }
   };
 
-  // Function to mute/unmute a chat
-  const toggleMuteChat = async (chatId) => {
-    const chatRef = doc(db, 'chats', chatId);
-    try {
-      const chatSnapshot = await getDoc(chatRef);
-      if (chatSnapshot.exists()) {
-        await updateDoc(chatRef, { muted: !chatSnapshot.data().muted });
-      }
-    } catch (error) {
-      console.error('Error toggling mute on chat:', error);
-    }
+  // Context Menu Component
+  // const ChatContextMenu = ({ x, y, onPin, onMute, onDelete, visible }) => {
+  //   if (!visible) return null;
+
+  //   return (
+  //     <div style={{ position: 'fixed', left: `${contextMenu.x}px`, top: `${contextMenu.y}px` }}>
+  //       <Menu
+  //        menuButton={
+  //         <MenuButton className='context-menu-button'></MenuButton>
+  //       }
+  //       transition
+  //       >
+  //         <MenuItem onClick={() => onPin()}>Pin</MenuItem>
+  //         <MenuItem onClick={() => onMute()}>Mute</MenuItem>
+  //         <MenuItem onClick={() => onDelete()}>Delete</MenuItem>
+  //       </Menu>
+  //     </div>
+  //   );
+  // };
+
+  const ChatContextMenu = ({ x, y, onPin, onMute, onDelete, visible }) => {
+    if (!visible) return null;
+
+    return (
+      <div
+        style={{
+          position: 'fixed',
+          left: `${x}px`,
+          top: `${y}px`,
+          zIndex: 1000
+        }}
+      >
+        <ul
+          style={{
+            listStyleType: 'none',
+            padding: '10px',
+            backgroundColor: '#111827',
+            borderRadius: '5px',
+            boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
+          }}
+        >
+          <li style={{ padding: '5px' }} onClick={onPin}>
+            Pin
+          </li>
+          <li style={{ padding: '5px' }} onClick={onMute}>
+            Mute
+          </li>
+          <li style={{ padding: '5px' }} onClick={onDelete}>
+            Delete
+          </li>
+        </ul>
+      </div>
+    );
   };
+
+  const [contextMenu, setContextMenu] = useState({
+    visible: false,
+    x: 0,
+    y: 0,
+    chatId: ''
+  });
+
+  const showContextMenu = (e, chatId) => {
+    e.preventDefault();
+    setContextMenu({
+      visible: true,
+      x: e.clientX,
+      y: e.clientY,
+      chatId
+    });
+  };
+
+  // Hide context menu when clicking anywhere in the document
+  useEffect(() => {
+    const hideMenu = () => setContextMenu({ ...contextMenu, visible: false });
+    document.addEventListener('click', hideMenu);
+    return () => document.removeEventListener('click', hideMenu);
+  }, [contextMenu]); // Include contextMenu in dependency array
+
+  const hideContextMenu = () => {
+    setContextMenu({ ...contextMenu, visible: false });
+  };
+
+  const longPressEvent = useLongPress(
+    (e) => showContextMenu(e, chatId), // For long press
+    () => {} // For click, currently not needed
+  );
 
   return (
     <>
       <SEO title='Chat / Degen Diaries' />
+      <ToastContainer position='bottom-center' autoClose={5000} />
+
       <MainHeader
         useMobileSidebar
         title={
@@ -405,6 +558,8 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
                 key={index}
                 className='flex cursor-pointer flex-row items-center space-x-3 border-b border-gray-700 px-2 py-3 pb-2'
                 onClick={() => handleUserSelect(userDetail?.id)}
+                onContextMenu={(e) => showContextMenu(e, chatId)}
+                {...longPressEvent}
               >
                 <img
                   src={
@@ -417,6 +572,15 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
                 <div className='text-left font-semibold text-gray-300'>
                   {userDetail?.name}
                 </div>
+                <ChatContextMenu
+                  x={contextMenu.x}
+                  y={contextMenu.y}
+                  visible={contextMenu.visible}
+                  onPin={() => handlePinChat(contextMenu.chatId)}
+                  onMute={() => handleMuteChat(contextMenu.chatId)}
+                  onDelete={() => handleDeleteChat(contextMenu.chatId)}
+                />
+
                 {/* <div className='chat-actions'>
                   <button
                     onClick={() => togglePinChat(userDetail.id)}
