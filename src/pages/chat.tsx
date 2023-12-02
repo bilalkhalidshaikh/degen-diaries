@@ -859,7 +859,7 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
               let chatItemClass = `flex cursor-pointer items-center space-x-3 px-2 py-3 border-b border-gray-700`;
               chatItemClass +=
                 selectedChatId === userDetail.id
-                  ? ' bg-blue-200 text-white'
+                  ? ' bg-rgba(27, 40, 53, 0.651) text-white'
                   : ' bg-gray-700 text-gray-300';
 
               return (
@@ -867,7 +867,7 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
                   key={userDetail.id}
                   className={`flex cursor-pointer items-center space-x-3 px-2 py-3 ${
                     selectedChatId === userDetail.id
-                      ? 'bg-blue-200'
+                      ? 'bg-rgba(27, 40, 53, 0.651)'
                       : 'bg-gray-700'
                   } border-b border-gray-700`}
                   onClick={() => handleUserSelect(userDetail.id)}
