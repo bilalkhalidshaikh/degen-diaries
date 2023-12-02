@@ -1,45 +1,29 @@
 import { useState, useEffect, useCallback } from 'react';
 
-const useLongPress = (onLongPressMobile, onClick, { delay = 500 } = {}) => {
-  return (chatId) => {
-    const [startLongPress, setStartLongPress] = useState(false);
-
-    useEffect(() => {
-      let timerId;
-      if (startLongPress) {
-        timerId = setTimeout(() => {
-          onLongPressMobile(chatId);
-        }, delay);
-      } else {
-        clearTimeout(timerId);
-      }
+const useLongPress = (onLongPressMobile, onClick, delay = 500) => {
+  const start = useCallback(
+    (chatId) => {
+      const timerId = setTimeout(() => {
+        onLongPressMobile(chatId);
+      }, delay);
 
       return () => {
         clearTimeout(timerId);
       };
-    }, [onLongPressMobile, delay, startLongPress, chatId]);
+    },
+    [onLongPressMobile, delay]
+  );
 
-    const start = () => {
-      setStartLongPress(true);
-    };
-
-    const stop = (event) => {
-      if (startLongPress) {
-        onLongPressMobile(chatId);
-      } else {
-        onClick(event);
+  const stop = useCallback(
+    (event, chatId) => {
+      if (event.type === 'mouseup' || event.type === 'touchend') {
+        onClick(event, chatId);
       }
-      setStartLongPress(false);
-    };
+    },
+    [onClick]
+  );
 
-    return {
-      onMouseDown: start,
-      onTouchStart: start,
-      onMouseUp: stop,
-      onMouseLeave: stop,
-      onTouchEnd: stop
-    };
-  };
+  return { start, stop };
 };
 
 export default useLongPress;

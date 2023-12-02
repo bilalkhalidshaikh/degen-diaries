@@ -4,7 +4,7 @@ import { SEO } from '@components/common/seo';
 import { MainContainer } from '@components/chat/main-container';
 import { MainHeader } from '@components/chat/main-header';
 import type { ReactElement, ReactNode } from 'react';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '../lib/context/web3-auth-context'; // replace with the actual path to your auth context
 // import { useAuth } from '../lib/context/auth-context'; // replace with the actual path to your auth context
@@ -524,6 +524,7 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
     });
     await togglePinChat(chatIdToPin);
     toast.success('Chat pinned successfully');
+    setShowActionBar(false);
   };
 
   const handleMuteChat = async (chatIdToMute) => {
@@ -540,6 +541,7 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
     const newStatus = !currentChat.isMuted;
 
     await toggleMuteChat(chatIdToMute); // Assuming this updates Firestore
+    setShowActionBar(false);
 
     // After muting, update and sort the user list
     setUsers((prevUsers) => {
@@ -558,6 +560,7 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
 
     await deleteChat(chatIdToDelete); // Assuming this updates Firestore
     updateChatState(chatId, { isDeleted: true });
+    setShowActionBar(false);
 
     // After deleting, update and sort the user list
     setUsers((prevUsers) => {
@@ -694,14 +697,29 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
     setShowActionBar(true);
   };
 
+  const handleLongPressMobile = useCallback((chatId) => {
+    // Only apply the behavior if on a mobile device
+    if (isMobileDevice()) {
+      console.log(`Long press on chat ID: ${chatId}`);
+      // Update state to indicate the chat item is being long-pressed
+      // For example, you can use a state to store the ID of the chat being long-pressed
+      setSelectedChatId(chatId);
+      setShowActionBar(true);
+    }
+  }, []);
+
+  const handleOnClick = useCallback((event, chatId) => {
+    // Handle the click action here
+    console.log(`Click on chat ID: ${chatId}`);
+    // You can navigate, set state, or perform other actions
+  }, []);
+
   // Modified Long Press Event
   // In Chat component
-  // Create the longPressEvent hook instance outside of the component rendering
-  const longPressEvent = useLongPress(
-    onLongPressMobile, // Long press handler for mobile
-    onClick, // Click handler (common for mobile and desktop)
-    { delay: 500 }
-  );
+  // Outside your component
+  const longPressHandlers = useLongPress(handleLongPressMobile, handleOnClick, {
+    delay: 500
+  });
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -724,31 +742,37 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
 
   const TopActionBar = ({ onPin, onMute, onDelete }) => {
     return (
-      <div className='fixed bottom-10 left-1/2 z-50 flex -translate-x-1/2 transform items-center justify-around rounded bg-gray-800 p-2 shadow-md'>
+      <div className='fixed bottom-10 left-1/2 z-50 flex -translate-x-1/2 transform items-center justify-around space-x-4 rounded bg-gray-800 p-3 shadow-lg'>
         <button onClick={onPin} className='focus:outline-none'>
           <img
-            src='https://cdn-icons-png.flaticon.com/512/1828/1828911.png'
+            src='https://icons8.com/icon/476/pin'
             alt='Pin'
-            className='h-6 w-6'
+            className='h-8 w-8'
           />
         </button>
         <button onClick={onMute} className='focus:outline-none'>
           <img
-            src='https://cdn-icons-png.flaticon.com/512/1828/1828970.png'
+            src='https://icons8.com/icon/eBCEOT0oGnaL/mute'
             alt='Mute'
-            className='h-6 w-6'
+            className='h-8 w-8'
           />
         </button>
         <button onClick={onDelete} className='focus:outline-none'>
           <img
-            src='https://cdn-icons-png.flaticon.com/512/1214/1214428.png'
+            src='https://icons8.com/icon/1234/trash'
             alt='Delete'
-            className='h-6 w-6'
+            className='h-8 w-8'
           />
         </button>
       </div>
     );
   };
+
+  useEffect(() => {
+    const hideActionBar = () => setShowActionBar(false);
+    document.addEventListener('click', hideActionBar);
+    return () => document.removeEventListener('click', hideActionBar);
+  }, []);
 
   return (
     <>
@@ -828,6 +852,15 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
             {users.map((userDetail, index) => {
               const chatState = chatStates.get(userDetail.id) || {};
               if (chatState.isDeleted) return null; // Skip rendering deleted chats
+              const handleMouseDown = () =>
+                longPressHandlers.start(userDetail.id);
+              const handleMouseUp = (e) =>
+                longPressHandlers.stop(e, userDetail.id);
+              let chatItemClass = `flex cursor-pointer items-center space-x-3 px-2 py-3 border-b border-gray-700`;
+              chatItemClass +=
+                selectedChatId === userDetail.id
+                  ? ' bg-blue-200 text-white'
+                  : ' bg-gray-700 text-gray-300';
 
               return (
                 <div
@@ -839,12 +872,20 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
                   } border-b border-gray-700`}
                   onClick={() => handleUserSelect(userDetail.id)}
                   onContextMenu={(e) => showContextMenu(e, userDetail.id)}
-                  {...longPressEvent(userDetail.id)} // Apply long press event handlers here
+                  // {...longPressEvent(userDetail.id)} // Apply long press event handlers here
+                  onMouseDown={handleMouseDown}
+                  onMouseUp={handleMouseUp}
+                  {...(isMobileDevice() && {
+                    onMouseDown: () => longPressHandlers.start(userDetail.id),
+                    onMouseUp: (e) => longPressHandlers.stop(e, userDetail.id),
+                    onTouchStart: () => longPressHandlers.start(userDetail.id),
+                    onTouchEnd: (e) => longPressHandlers.stop(e, userDetail.id)
+                  })}
                 >
                   <img
                     src={
                       userDetail?.photoURL ||
-                      'https://source.unsplash.com/random/600x600'
+                      'https://icons8.com/icon/nSR7D8Yb2tjC/customer'
                     }
                     className='non-selectable h-12 w-12 rounded-full object-cover'
                     alt='User Avatar'

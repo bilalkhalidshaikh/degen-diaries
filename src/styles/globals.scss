@@ -79,7 +79,7 @@
   }
 
   .trim-alt {
-    @apply overflow-hidden text-ellipsis break-all [display:-webkit-box] [-webkit-line-clamp:1] [-webkit-box-orient:vertical];
+    @apply overflow-hidden text-ellipsis break-all [-webkit-box-orient:vertical] [-webkit-line-clamp:1] [display:-webkit-box];
   }
 
   .hover-card {
@@ -91,5 +91,11 @@
     @apply z-10 rounded-md bg-main-background outline-none 
            [box-shadow:#65778633_0px_0px_15px,_#65778626_0px_0px_3px_1px] 
            dark:[box-shadow:#ffffff33_0px_0px_15px,_#ffffff26_0px_0px_3px_1px];
+  }
+}
+
+@layer utilities {
+  .non-selectable {
+    user-select: none;
   }
 }
