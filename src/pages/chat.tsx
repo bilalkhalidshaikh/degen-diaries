@@ -41,11 +41,9 @@ type User = {
   isDeleted?: boolean;
 };
 // Utility function to check if the device is mobile
+// Improved Mobile Device Detection
 function isMobileDevice() {
-  return (
-    typeof window.orientation !== 'undefined' ||
-    navigator.userAgent.indexOf('IEMobile') !== -1
-  );
+  return window.matchMedia('only screen and (max-width: 760px)').matches;
 }
 export default function Chat({ chatId }: { chatId: string }): JSX.Element {
   const router = useRouter();
@@ -59,6 +57,7 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
   const [chatUser, setChatUser] = useState<User | null>(null);
   const [chatStates, setChatStates] = useState(new Map());
   const [showActionBar, setShowActionBar] = useState(false);
+  const [selectedChatId, setSelectedChatId] = useState(null);
 
   useEffect(() => {
     if (!chatId && users.length > 0) {
@@ -685,17 +684,24 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
   const hideContextMenu = () => {
     setContextMenu({ ...contextMenu, visible: false });
   };
-
-  const longPressEvent = useLongPress(
-    (e) => showContextMenu(e, chatId),
-    onClick, // Handle regular click
-    { delay: 500 } // Customize delay for long press
-  );
-
   const onLongPress = (chatId) => {
     setShowActionBar(true);
     setContextMenu({ ...contextMenu, chatId });
   };
+  // Define the onLongPressMobile handler
+  const onLongPressMobile = (chatId) => {
+    setSelectedChatId(chatId);
+    setShowActionBar(true);
+  };
+
+  // Modified Long Press Event
+  // In Chat component
+  // Create the longPressEvent hook instance outside of the component rendering
+  const longPressEvent = useLongPress(
+    onLongPressMobile, // Long press handler for mobile
+    onClick, // Click handler (common for mobile and desktop)
+    { delay: 500 }
+  );
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -808,13 +814,14 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
             <div className='w-10' /> {/* Spacer div for centering the title */}
           </div>
         )}
-        {showActionBar && (
+        {showActionBar && isMobileDevice() && (
           <TopActionBar
-            onPin={() => handlePinChat(contextMenu.chatId)}
-            onMute={() => handleMuteChat(contextMenu.chatId)}
-            onDelete={() => handleDeleteChat(contextMenu.chatId)}
+            onPin={() => handlePinChat(selectedChatId)}
+            onMute={() => handleMuteChat(selectedChatId)}
+            onDelete={() => handleDeleteChat(selectedChatId)}
           />
         )}
+
         {/* Chat List */}
         {!showChatBox && (
           <div className='flex h-full w-full flex-col overflow-y-auto border-r border-gray-700 p-4 md:w-1/4'>
@@ -825,10 +832,14 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
               return (
                 <div
                   key={userDetail.id}
-                  className='non-selectable flex cursor-pointer flex-row items-center space-x-3 border-b border-gray-700 px-2 py-3 pb-2' // Apply the no-select class here
-                  onClick={() => handleUserSelect(userDetail?.id)}
-                  onContextMenu={(e) => showContextMenu(e, userDetail?.id)}
-                  {...longPressEvent}
+                  className={`flex cursor-pointer items-center space-x-3 px-2 py-3 ${
+                    selectedChatId === userDetail.id
+                      ? 'bg-blue-200'
+                      : 'bg-gray-700'
+                  } border-b border-gray-700`}
+                  onClick={() => handleUserSelect(userDetail.id)}
+                  onContextMenu={(e) => showContextMenu(e, userDetail.id)}
+                  {...longPressEvent(userDetail.id)} // Apply long press event handlers here
                 >
                   <img
                     src={
