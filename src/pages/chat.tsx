@@ -28,6 +28,8 @@ import { Menu, MenuItem, MenuButton } from '@szhsin/react-menu';
 import '@szhsin/react-menu/dist/index.css';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { getMessaging, onMessage } from 'firebase/messaging';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 
 const db = getFirestore();
 
@@ -58,6 +60,7 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
   const [chatStates, setChatStates] = useState(new Map());
   const [showActionBar, setShowActionBar] = useState(false);
   const [selectedChatId, setSelectedChatId] = useState(null);
+  const [recipientToken, setRecipientToken] = useState(null); // State to store the recipient's FCM token
 
   useEffect(() => {
     if (!chatId && users.length > 0) {
@@ -98,6 +101,18 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
                 doc(db, `users/${otherUserId}`)
               ); // Use getDoc here
               setChatUser({ ...otherUserDoc.data(), id: otherUserDoc.id });
+            }
+            if (otherUserId) {
+              // Fetch the other user's details
+              const otherUserDoc = await getDoc(
+                doc(db, `users/${otherUserId}`)
+              );
+              if (otherUserDoc.exists()) {
+                setChatUser({ ...otherUserDoc.data(), id: otherUserDoc.id });
+
+                // Store the recipient's FCM token
+                setRecipientToken(otherUserDoc.data().fcmToken); // Assuming the token is stored under fcmToken field
+              }
             }
           }
         } catch (error) {
@@ -187,24 +202,101 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
     }
   };
 
+  const messaging = getMessaging();
+
+  // const handleSendMessage = async () => {
+  //   if (!chatId || !user) {
+  //     console.log('Chat ID or user information is missing');
+  //     return;
+  //   }
+
+  //   const trimmedMessage = message.trim();
+
+  //   if (trimmedMessage) {
+  //     try {
+  //       await addDoc(collection(db, `chats/${chatId}/messages`), {
+  //         text: trimmedMessage,
+  //         sender: user.id, // Use the user's wallet address as the sender ID
+  //         createdAt: new Date()
+  //       });
+  //       setMessage('');
+  //       // Send push notification
+  //       const sendNotification = httpsCallable(
+  //         getFunctions(),
+  //         'sendNotification'
+  //       );
+  //       sendNotification({
+  //         token: recipientToken, // Token of the recipient
+  //         message: trimmedMessage // Your message content
+  //       })
+  //         .then((result) => {
+  //           // Notification sent
+  //         })
+  //         .catch((error) => {
+  //           // Handle errors
+  //         });
+
+  //       // Save the notification in Firestore
+  //       await addDoc(collection(db, 'notifications'), {
+  //         userId: recipientUserId,
+  //         message: trimmedMessage,
+  //         createdAt: new Date()
+  //       });
+  //     } catch (e) {
+  //       console.error('Error adding document: ', e);
+  //     }
+  //   } else {
+  //     console.log('Please type something to send');
+  //   }
+  // };
+
   const handleSendMessage = async () => {
-    if (!chatId || !user) {
-      console.log('Chat ID or user information is missing');
+    if (!chatId || !user || !chatUser) {
+      console.log('Chat ID, user information, or chatUser is missing');
       return;
     }
 
     const trimmedMessage = message.trim();
-
     if (trimmedMessage) {
       try {
-        await addDoc(collection(db, `chats/${chatId}/messages`), {
-          text: trimmedMessage,
-          sender: user.id, // Use the user's wallet address as the sender ID
-          createdAt: new Date()
-        });
+        // Send the message in Firestore
+        const messageRef = await addDoc(
+          collection(db, `chats/${chatId}/messages`),
+          {
+            text: trimmedMessage,
+            sender: user.id,
+            createdAt: new Date()
+          }
+        );
+
+        // Retrieve the recipient's FCM token from Firestore
+        const recipientDoc = await getDoc(doc(db, `users/${chatUser.id}`));
+        if (recipientDoc.exists()) {
+          const recipientToken = recipientDoc.data().fcmToken;
+
+          // Send push notification (Assuming you have a cloud function or API to handle this)
+          const sendNotification = httpsCallable(
+            getFunctions(),
+            'sendNotification'
+          );
+          sendNotification({
+            token: recipientToken,
+            message: trimmedMessage
+          });
+
+          // Save the notification in Firestore
+          await addDoc(collection(db, 'notifications'), {
+            userId: chatUser.id,
+            message: trimmedMessage,
+            createdAt: new Date()
+            // Other relevant details
+          });
+        }
+
+        // Reset message input
         setMessage('');
       } catch (e) {
-        console.error('Error adding document: ', e);
+        console.error('Error sending message: ', e);
       }
     } else {
       console.log('Please type something to send');
@@ -717,8 +809,9 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
   // Modified Long Press Event
   // In Chat component
   // Outside your component
+  // Ensure longPressHandlers is set up correctly
   const longPressHandlers = useLongPress(handleLongPressMobile, handleOnClick, {
-    delay: 500
+    delay: 500 // Adjust the delay as per your requirement
   });
 
   useEffect(() => {
@@ -742,7 +835,7 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
 
   const TopActionBar = ({ onPin, onMute, onDelete }) => {
     return (
-      <div className='fixed bottom-10 left-1/2 z-50 flex -translate-x-1/2 transform items-center justify-around space-x-4 rounded bg-gray-800 p-3 shadow-lg'>
+      <div className='fixed bottom-10 left-1/2 z-50 flex -translate-x-1/2 transform items-center justify-around space-x-4 rounded bg-gray-400 p-3 shadow-lg'>
         <button onClick={onPin} className='focus:outline-none'>
           <img
             src='https://img.icons8.com/?size=50&id=476&format=png'

@@ -12,7 +12,9 @@ import {
   arrayUnion,
   arrayRemove,
   serverTimestamp,
-  getCountFromServer
+  getCountFromServer,
+  addDoc,
+  collection
 } from 'firebase/firestore';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { db, storage } from './app';
@@ -131,6 +133,24 @@ import type { Theme, Accent } from '@lib/types/theme';
 //   return result;
 // }
 
+// Example of a notification data structure
+type NotificationData = {
+  type: 'follow' | 'unfollow' | 'like' | 'unlike';
+  fromUserId: string;
+  toUserId: string;
+  timestamp: any; // Firebase server timestamp
+};
+
+export async function saveNotification(
+  notificationData: NotificationData
+): Promise<void> {
+  const notificationsRef = collection(db, 'notifications');
+  await addDoc(notificationsRef, {
+    ...notificationData,
+    timestamp: serverTimestamp()
+  });
+}
+
 export async function checkUsernameAvailability(
   username: string
 ): Promise<boolean> {
@@ -220,6 +240,13 @@ export async function manageFollow(
   }
 
   await batch.commit();
+  // Save notification
+  await saveNotification({
+    type,
+    fromUserId: userId,
+    toUserId: targetUserId,
+    timestamp: serverTimestamp()
+  });
 }
 
 export async function removeTweet(tweetId: string): Promise<void> {
@@ -360,6 +387,13 @@ export function manageLike(
     }
 
     await batch.commit();
+    // Save notification
+    await saveNotification({
+      type,
+      fromUserId: userId,
+      toUserId: tweetId,
+      timestamp: serverTimestamp()
+    });
   };
 }
 
