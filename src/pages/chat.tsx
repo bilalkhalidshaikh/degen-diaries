@@ -745,21 +745,21 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
       <div className='fixed bottom-10 left-1/2 z-50 flex -translate-x-1/2 transform items-center justify-around space-x-4 rounded bg-gray-800 p-3 shadow-lg'>
         <button onClick={onPin} className='focus:outline-none'>
           <img
-            src='https://icons8.com/icon/476/pin'
+            src='https://img.icons8.com/?size=50&id=476&format=png'
             alt='Pin'
             className='h-8 w-8'
           />
         </button>
         <button onClick={onMute} className='focus:outline-none'>
           <img
-            src='https://icons8.com/icon/eBCEOT0oGnaL/mute'
+            src='https://img.icons8.com/?size=50&id=644&format=png'
             alt='Mute'
             className='h-8 w-8'
           />
         </button>
         <button onClick={onDelete} className='focus:outline-none'>
           <img
-            src='https://icons8.com/icon/1234/trash'
+            src='https://img.icons8.com/?size=24&id=99933&format=png'
             alt='Delete'
             className='h-8 w-8'
           />
@@ -885,7 +885,7 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
                   <img
                     src={
                       userDetail?.photoURL ||
-                      'https://icons8.com/icon/nSR7D8Yb2tjC/customer'
+                      'https://img.icons8.com/?size=50&id=11730&format=png'
                     }
                     className='non-selectable h-12 w-12 rounded-full object-cover'
                     alt='User Avatar'
