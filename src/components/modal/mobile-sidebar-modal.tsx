@@ -228,7 +228,7 @@ export function MobileSidebarModal({
             {/* {bottomNavLinks.map((linkData) => (
               <MobileSidebarLink bottom {...linkData} key={linkData.href} />
             ))} */}
-            <Button
+            {/* <Button
               className='accent-tab accent-bg-tab flex items-center gap-2 rounded-md p-1.5 font-bold transition
                          hover:bg-light-primary/10 focus-visible:ring-2 first:focus-visible:ring-[#878a8c] 
                          dark:hover:bg-dark-primary/10 dark:focus-visible:ring-white'
@@ -239,7 +239,7 @@ export function MobileSidebarModal({
                 iconName='PaintBrushIcon'
               />
               Theme
-            </Button>
+            </Button> */}
             <Button
               className='accent-tab accent-bg-tab flex items-center gap-2 rounded-md p-1.5 font-bold transition
                          hover:bg-light-primary/10 focus-visible:ring-2 first:focus-visible:ring-[#878a8c] 

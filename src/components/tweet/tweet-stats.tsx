@@ -10,6 +10,13 @@ import type { Tweet } from '@lib/types/tweet';
 import { useTokenBalances } from '@lib/hooks/useTokenBalances'; // Adjust the path as necessary
 import { Modal } from '@components/modal/modal'; // Assuming this is the correct import path
 import { useModal } from '@lib/hooks/useModal';
+import { Loading } from '@components/ui/loading';
+import { StatsEmpty } from '@components/tweet/stats-empty';
+import type { ReactElement, ReactNode } from 'react';
+import { Button } from '@components/ui/button';
+import { useAccount, useBalance } from 'wagmi';
+import { useAuth } from '@lib/context/web3-auth-context';
+import { useUser } from '@lib/context/user-context';
 
 type TweetStatsProps = Pick<
   Tweet,
@@ -94,6 +101,43 @@ export function TweetStats({
     handleOpenCoinsModal();
     console.log('ERC-20 Balances:', erc20Balances);
     console.log('ERC-721 Balances:', erc721Balances);
+  };
+
+  // const { user } = useUser();
+  const { address } = useAccount();
+  useEffect(() => {
+    console.log('here is the add ', address);
+  }, [address]);
+  const { data: balanceData, isLoading } = useBalance({
+    address: address
+  });
+
+  useEffect(() => {
+    // You can do something with the balance data here if needed
+  }, [balanceData]);
+
+  if (isLoading) {
+    return <Loading />; // Your loading component
+  }
+
+  // Format balance for display
+  const formattedBalance = balanceData?.formatted;
+
+  // Function to return the correct icon based on the symbol
+  const getSymbolIcon = (symbol) => {
+    const iconStyle = { width: '64px', height: '64px' };
+
+    const icons = {
+      ETH: 'https://img.icons8.com/external-dygo-kerismaker/48/external-Etherum-cryprocurrency-dygo-kerismaker.png',
+      BTC: 'https://img.icons8.com/external-filled-outline-perfect-kalash/64/external-bitcoin-currency-and-cryptocurrency-signs-free-filled-outline-perfect-kalash.png',
+      LTC: 'https://img.icons8.com/external-filled-outline-perfect-kalash/64/external-coin-currency-and-cryptocurrency-signs-free-filled-outline-perfect-kalash-3.png'
+      // Add more symbol-URL pairs as needed
+    };
+
+    const iconUrl = icons[symbol];
+    return iconUrl ? (
+      <img src={iconUrl} alt={symbol} style={iconStyle} />
+    ) : null;
   };
 
   return (
@@ -185,50 +229,30 @@ export function TweetStats({
           <div className='modal-content  text-white'>
             {/* Display ERC-20 and ERC-721 token balances here */}
             {/* Modal content */}
-            <div>
-              {erc20Balances && erc20Balances.length > 0 ? (
-                <div>
-                  <h3 className='text-lg font-medium leading-6 text-white'>
-                    ERC-20 Token Balances:
-                  </h3>
-                  <ul className='mt-2'>
-                    {erc20Balances.map((token) => (
-                      <li key={token.contractAddress} className='py-1'>
-                        {token.tokenName}: {token.balance}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ) : (
-                <p className='text-white'>
-                  This wallet doesn't have any ERC-20 tokens yet.
-                </p>
-              )}
-
-              {erc721Balances && erc721Balances.length > 0 ? (
-                <div className='mt-4'>
-                  <h3 className='text-lg font-medium leading-6 text-white'>
-                    ERC-721 Tokens:
-                  </h3>
-                  <ul className='mt-2'>
-                    {erc721Balances.map((nft) => (
-                      <li key={nft.tokenId} className='py-1'>
-                        {nft.tokenName} - Token ID: {nft.tokenId}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ) : (
-                <p className='mt-4 text-white'>
-                  This wallet doesn't have any ERC-721 tokens yet.
-                </p>
-              )}
-            </div>
-
+            {!balanceData?.value ? (
+              <StatsEmpty
+                title='No coins found in the wallet'
+                description='When they do, those Coins will show up here.'
+              />
+            ) : (
+              <>
+                {/* Content to display when there are coins in the wallet */}
+                <StatsEmpty
+                  title={`Current wallet balance is ${formattedBalance}${balanceData?.symbol}`}
+                  description={
+                    <>
+                      {getSymbolIcon(balanceData?.symbol)}
+                      <span>{balanceData?.symbol}</span>
+                    </>
+                  }
+                />
+                {/* Render additional details like ERC-20 and ERC-721 token balances */}
+              </>
+            )}
             <div className='mt-4'>
               <button
                 type='button'
-                className='inline-flex justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2'
+                className='inline-center margin-left-auto margin-right-auto display-center justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2'
                 onClick={() => handleCloseCoinsModal()}
               >
                 Close

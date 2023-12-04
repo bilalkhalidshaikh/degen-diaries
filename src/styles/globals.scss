@@ -24,7 +24,7 @@
     --light-sidebar-background: 247 249 249;
 
     --accent-yellow: 255 213 0;
-    --accent-blue: 29 155 240;
+    --accent-blue: 42 82 190;
     --accent-pink: 249 26 130;
     --accent-purple: 120 87 255;
     --accent-orange: 255 122 0;
@@ -97,6 +97,6 @@
 @layer utilities {
   .non-selectable {
     user-select: none;
-    // color:rgba(27, 40, 53, 0.651);
+    color: #15295f5d;
   }
 }

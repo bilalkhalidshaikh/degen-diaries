@@ -116,7 +116,7 @@ export default function UserMedia() {
   if (!balanceData?.value) {
     return (
       <StatsEmpty
-        title={`${user?.username} doesn't have any coins yet.`}
+        title={`No coins found in @${user?.username}'s wallet`}
         description='When they do, those Coins will show up here.'
       />
     );
@@ -125,12 +125,38 @@ export default function UserMedia() {
   // Format balance for display
   const formattedBalance = balanceData.formatted;
 
+  // Function to return the correct icon based on the symbol
+  const getSymbolIcon = (symbol) => {
+    const iconStyle = { width: '64px', height: '64px' };
+
+    const icons = {
+      ETH: 'https://img.icons8.com/external-dygo-kerismaker/48/external-Etherum-cryprocurrency-dygo-kerismaker.png',
+      BTC: 'https://img.icons8.com/external-filled-outline-perfect-kalash/64/external-bitcoin-currency-and-cryptocurrency-signs-free-filled-outline-perfect-kalash.png',
+      LTC: 'https://img.icons8.com/external-filled-outline-perfect-kalash/64/external-coin-currency-and-cryptocurrency-signs-free-filled-outline-perfect-kalash-3.png'
+      // Add more symbol-URL pairs as needed
+    };
+
+    const iconUrl = icons[symbol];
+    return iconUrl ? (
+      <img src={iconUrl} alt={symbol} style={iconStyle} />
+    ) : null;
+  };
+
   return (
     <section>
-      <h1>Wallet Balance</h1>
+      {/* <h1>Wallet Balance</h1>
       <p>
         {formattedBalance} {balanceData.symbol}
-      </p>
+      </p> */}
+      <StatsEmpty
+        title={`Current wallet balance is ${formattedBalance}${balanceData.symbol}`}
+        description={
+          <>
+            {getSymbolIcon(balanceData.symbol)}
+            <span>{balanceData.symbol}</span>
+          </>
+        }
+      />
       {/* Render additional UI components to display ERC-20 and ERC-721 tokens */}
     </section>
   );

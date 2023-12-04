@@ -142,70 +142,91 @@
 //   </ProtectedLayout>
 // );
 
+// CopyTradeFeature.js
 import React, { useState, useEffect } from 'react';
+import useSmartContract from '@lib/hooks/useSmartContract'; // Assuming useSmartContract is in the same directory
+import { AnimatePresence } from 'framer-motion';
+import { query, where } from 'firebase/firestore';
+import { useCollection } from '@lib/hooks/useCollection';
+import { tweetsCollection } from '@lib/firebase/collections';
 import { useUser } from '@lib/context/user-context';
-import { useAccount, useBalance } from 'wagmi';
-import { Loading } from '@components/ui/loading';
-import { StatsEmpty } from '@components/tweet/stats-empty';
-import type { ReactElement, ReactNode } from 'react';
+import { mergeData } from '@lib/merge';
 import { UserLayout, ProtectedLayout } from '@components/layout/common-layout';
 import { MainLayout } from '@components/layout/main-layout';
 import { SEO } from '@components/common/seo';
 import { UserDataLayout } from '@components/layout/user-data-layout';
 import { UserHomeLayout } from '@components/layout/user-home-layout';
+import { Tweet } from '@components/tweet/tweet';
+import { Loading } from '@components/ui/loading';
+import { StatsEmpty } from '@components/tweet/stats-empty';
+import type { ReactElement, ReactNode } from 'react';
+import { Button } from '@components/ui/button';
+import { useAccount, useBalance } from 'wagmi';
+import { useAuth } from '@lib/context/web3-auth-context';
 
-export default function UserLikes(): JSX.Element {
+export default function UserLikes() {
   const { user } = useUser();
   const { address } = useAccount();
-  const [isLoading, setLoading] = useState(true);
-  const [tokenBalances, setTokenBalances] = useState([]);
-
-  // Define a list of ERC-20 tokens you want to display (with their contract addresses)
-  const tokens = [
-    { name: 'Token1', address: address }, // Replace with actual token names and addresses
-    { name: 'Token2', address: address }
-    // ... add more tokens as needed
-  ];
+  useEffect(() => {
+    console.log('here is the add ', address);
+  }, [address]);
+  const { data: balanceData, isLoading } = useBalance({
+    address: address
+  });
 
   useEffect(() => {
-    const fetchBalances = async () => {
-      if (address) {
-        const balances = await Promise.all(
-          tokens.map((token) =>
-            useBalance({
-              address: address,
-              token: token.address
-            })
-          )
-        );
-        setTokenBalances(balances);
-        setLoading(false);
-      }
-    };
-
-    fetchBalances();
-  }, [address, tokens]);
+    // You can do something with the balance data here if needed
+    console.log('here is the bal ', balanceData);
+  }, [balanceData]);
 
   if (isLoading) {
-    return <Loading />;
+    return <Loading />; // Your loading component
+  }
+  // Format balance for display
+  const formattedBalance = balanceData.formatted;
+
+  // Function to return the correct icon based on the symbol
+  const getSymbolIcon = (symbol) => {
+    const iconStyle = { width: '64px', height: '64px' };
+
+    const icons = {
+      ETH: 'https://img.icons8.com/external-dygo-kerismaker/48/external-Etherum-cryprocurrency-dygo-kerismaker.png',
+      BTC: 'https://img.icons8.com/external-filled-outline-perfect-kalash/64/external-bitcoin-currency-and-cryptocurrency-signs-free-filled-outline-perfect-kalash.png',
+      LTC: 'https://img.icons8.com/external-filled-outline-perfect-kalash/64/external-coin-currency-and-cryptocurrency-signs-free-filled-outline-perfect-kalash-3.png'
+      // Add more symbol-URL pairs as needed
+    };
+
+    const iconUrl = icons[symbol];
+    return iconUrl ? (
+      <img src={iconUrl} alt={symbol} style={iconStyle} />
+    ) : null;
+  };
+
+  if (!balanceData?.value) {
+    return (
+      <StatsEmpty
+        title={`No coins found in @${user?.username}'s wallet`}
+        description='When they do, those Coins will show up here.'
+      />
+    );
   }
 
   return (
     <section>
-      <h1>{`${user?.username}'s Wallet Coins`}</h1>
-      {tokenBalances.length > 0 ? (
-        tokenBalances.map((balance, index) => (
-          <p key={index}>
-            {tokens[index].name}: {balance.data?.formatted}{' '}
-            {balance.data?.symbol}
-          </p>
-        ))
-      ) : (
-        <StatsEmpty
-          title={`${user?.username} doesn't have any ERC-20 tokens yet.`}
-          description='When they do, those tokens will show up here.'
-        />
-      )}
+      {/* <h1>Wallet Balance</h1>
+      <p>
+        {formattedBalance} {balanceData.symbol}
+      </p> */}
+      <StatsEmpty
+        title={`Current wallet balance is ${formattedBalance}${balanceData.symbol}`}
+        description={
+          <>
+            {getSymbolIcon(balanceData.symbol)}
+            <span>{balanceData.symbol}</span>
+          </>
+        }
+      />
+      {/* Render additional UI components to display ERC-20 and ERC-721 tokens */}
     </section>
   );
 }

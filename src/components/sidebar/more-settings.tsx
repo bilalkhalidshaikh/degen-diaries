@@ -89,7 +89,7 @@ export function MoreSettings(): JSX.Element {
                       </MenuLink>
                     )}
                   </Menu.Item> */}
-                  <Menu.Item>
+                  {/* <Menu.Item>
                     {({ active }): JSX.Element => (
                       <Button
                         className={cn(
@@ -102,7 +102,7 @@ export function MoreSettings(): JSX.Element {
                         Theme
                       </Button>
                     )}
-                  </Menu.Item>
+                  </Menu.Item> */}
                 </Menu.Items>
               )}
             </AnimatePresence>

@@ -26,15 +26,15 @@ function setInitialTheme(): Theme {
   const savedTheme = localStorage.getItem('theme') as Theme | null;
   const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
 
-  return savedTheme ?? (prefersDark ? 'dim' : 'light');
+  return savedTheme ?? (prefersDark ? 'dark' : 'light');
 }
 
 function setInitialAccent(): Accent {
-  if (typeof window === 'undefined') return 'purple';
+  if (typeof window === 'undefined') return 'blue';
 
   const savedAccent = localStorage.getItem('accent') as Accent | null;
 
-  return savedAccent ?? 'purple';
+  return savedAccent ?? 'blue';
 }
 
 export function ThemeContextProvider({

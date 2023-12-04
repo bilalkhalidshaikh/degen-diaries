@@ -22,12 +22,12 @@ import { HomeLayout, ProtectedLayout } from '@components/layout/common-layout';
 import { MainLayout } from '@components/layout/main-layout';
 
 export type Notification = {
-  id: string;
-  message: string;
-  createdAt: Date;
-  actionLink?: string;
-  actionText?: string;
-  type: string; // Add this line
+  id: any;
+  message: any;
+  createdAt: any;
+  actionLink?: any;
+  actionText?: any;
+  type: any; // Add this line
   username: any;
 };
 
@@ -38,38 +38,122 @@ export default function Notifications(): JSX.Element {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
+  // useEffect(() => {
+  //   if (user) {
+  //     const notificationsRef = collection(db, 'notifications');
+  //     const q = query(notificationsRef, where('userId', '==', user.id));
+  //     const unsubscribe = onSnapshot(q, async (snapshot) => {
+  //       const notificationsData = await Promise.all(
+  //         snapshot.docs.map(async (notificationDoc) => {
+  //           const data = notificationDoc.data();
+  //           const userDocRef = doc(db, 'users', data.userId);
+  //           const userDoc = await getDoc(userDocRef);
+  //           const username = userDoc.exists()
+  //             ? userDoc.data().username
+  //             : 'Unknown User';
+
+  //           // Extract the message without the user ID
+  //           const message = data.message.replace(
+  //             /^.*liked your tweet\./,
+  //             'liked your tweet.'
+  //           );
+
+  //           return {
+  //             id: notificationDoc.id,
+  //             ...data,
+  //             username,
+  //             message, // Use the extracted message here
+  //             createdAt: data.createdAt.toDate()
+  //           };
+  //         })
+  //       );
+  //       setNotifications(notificationsData);
+  //       setLoading(false);
+  //     });
+
+  //     return () => unsubscribe();
+  //   }
+  // }, [user]);
+
   useEffect(() => {
     if (user) {
+      console.log('Checking notifications for user ID:', user.id);
       const notificationsRef = collection(db, 'notifications');
-      const q = query(notificationsRef, where('userId', '==', user.id));
-      const unsubscribe = onSnapshot(q, async (snapshot) => {
-        const notificationsData = await Promise.all(
-          snapshot.docs.map(async (notificationDoc) => {
-            const data = notificationDoc.data();
-            const userDocRef = doc(db, 'users', data.userId);
-            const userDoc = await getDoc(userDocRef);
-            const username = userDoc.exists()
-              ? userDoc.data().username
-              : 'Unknown User';
 
-            // Extract the message without the user ID
-            const message = data.message.replace(
-              /^.*liked your tweet\./,
-              'liked your tweet.'
+      // Get all notifications where the current user is involved
+      const q = query(notificationsRef, where('toUserId', '==', user.id));
+
+      const unsubscribe = onSnapshot(
+        q,
+        async (snapshot) => {
+          console.log(
+            'Notifications snapshot received:',
+            snapshot.docs.map((doc) => doc.data())
+          );
+
+          try {
+            const notificationsData = await Promise.all(
+              snapshot.docs.map(async (notificationDoc) => {
+                const data = notificationDoc.data();
+                let customMessage = '';
+                let username = '';
+                let actionText = '';
+
+                if (data.type === 'like' || data.type === 'unlike') {
+                  // Fetch the tweet and then the user who created the tweet
+                  const tweetDoc = await getDoc(
+                    doc(db, 'tweets', data.toUserId)
+                  );
+                  if (tweetDoc.exists()) {
+                    const tweetData = tweetDoc.data();
+                    const userDoc = await getDoc(
+                      doc(db, 'users', tweetData.createdBy)
+                    );
+                    if (userDoc.exists()) {
+                      username = userDoc.data().username;
+                      const action =
+                        data.type === 'like' ? 'liked' : 'disliked';
+                      customMessage = `${username} ${action} your tweet: "${tweetData.text}"`;
+                      actionText = 'View Tweet';
+                    }
+                  }
+                } else if (data.type === 'follow' || data.type === 'unfollow') {
+                  // Directly fetch the user data
+                  const userDoc = await getDoc(doc(db, 'users', data.toUserId));
+                  if (userDoc.exists()) {
+                    username = userDoc.data().username;
+                    const action =
+                      data.type === 'follow'
+                        ? 'started following'
+                        : 'stopped following';
+                    customMessage = `${username} ${action} you.`;
+                    actionText = 'View Profile';
+                  }
+                }
+
+                return {
+                  id: notificationDoc.id,
+                  customMessage,
+                  createdAt: data.timestamp.toDate(),
+                  type: data.type,
+                  actionText
+                };
+              })
             );
 
-            return {
-              id: notificationDoc.id,
-              ...data,
-              username,
-              message, // Use the extracted message here
-              createdAt: data.createdAt.toDate()
-            };
-          })
-        );
-        setNotifications(notificationsData);
-        setLoading(false);
-      });
+            console.log('Final processed notifications:', notificationsData);
+            setNotifications(notificationsData);
+          } catch (error) {
+            console.error('Error processing notifications:', error);
+          }
+
+          setLoading(false);
+        },
+        (error) => {
+          console.error('Error fetching notifications:', error);
+          setLoading(false);
+        }
+      );
 
       return () => unsubscribe();
     }
