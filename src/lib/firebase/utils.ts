@@ -193,11 +193,11 @@ type NotificationData = {
 // }
 export async function saveNotification(
   notificationData: NotificationData,
-  fromUserId: string, // User who triggered the notification
-  tweetId?: string, // Optional: ID of the tweet for like/unlike
-  toUserId?: string // Optional: ID of the target user for follow/unfollow
+  fromUserId: string,
+  tweetId?: string, // For like/unlike notifications
+  toUserId?: string // For follow/unfollow notifications
 ): Promise<void> {
-  // Fetch user details
+  // Fetch the user who triggered the notification
   const userDocRef = doc(db, 'users', fromUserId);
   const userDoc = await getDoc(userDocRef);
   if (!userDoc.exists()) {
@@ -206,45 +206,57 @@ export async function saveNotification(
   }
   const userData = userDoc.data();
 
-  // Determine the targetUserId and message based on the notification type
-  let targetUserId = toUserId;
+  let targetUserId = '';
   let message = '';
 
+  console.log(`Notification type: ${notificationData.type}`);
+
   switch (notificationData.type) {
-    case 'follow':
-      message = `${userData.username} started following you.`;
-      break;
-    case 'unfollow':
-      message = `${userData.username} stopped following you.`;
-      break;
     case 'like':
-      message = `${userData.username} liked your diary.`;
-      if (tweetId) {
-        const tweetDocRef = doc(db, 'tweets', tweetId);
-        const tweetDoc = await getDoc(tweetDocRef);
-        if (tweetDoc.exists()) {
-          targetUserId = tweetDoc.data().createdBy; // Creator of the tweet
-        }
-      }
-      break;
     case 'unlike':
-      message = `${userData.username} disliked your diary.`;
       if (tweetId) {
         const tweetDocRef = doc(db, 'tweets', tweetId);
         const tweetDoc = await getDoc(tweetDocRef);
         if (tweetDoc.exists()) {
-          targetUserId = tweetDoc.data().createdBy; // Creator of the tweet
+          targetUserId = tweetDoc.data().createdBy;
+          console.log(`Tweet found. Target user ID: ${targetUserId}`);
+        } else {
+          console.error(`Tweet with ID ${tweetId} not found.`);
+          return;
         }
+      } else {
+        console.error('Tweet ID not provided for like/unlike notification.');
+        return;
       }
+      message = `${userData.username} ${notificationData.type}d your tweet.`;
+      break;
+    case 'follow':
+    case 'unfollow':
+      if (toUserId) {
+        targetUserId = toUserId;
+        console.log(`Target user ID for follow/unfollow: ${targetUserId}`);
+      } else {
+        console.error(
+          'Target user ID not provided for follow/unfollow notification.'
+        );
+        return;
+      }
+      message = `${userData.username} ${notificationData.type}ed you.`;
       break;
   }
 
-  // Save the notification with the details
+  // Ensure targetUserId is defined
+  if (!targetUserId) {
+    console.log('Target user ID is undefined');
+    return;
+  }
+
+  // Save the notification
   const notificationsRef = collection(db, 'notifications');
   await addDoc(notificationsRef, {
     ...notificationData,
     fromUserId,
-    toUserId: targetUserId, // Target user ID (tweet creator or followed user)
+    toUserId: targetUserId, // Target user ID
     message,
     senderName: userData.name,
     senderPhotoURL: userData.photoURL,
@@ -357,19 +369,19 @@ export async function manageFollow(
   // Create NotificationData object
   // Create NotificationData object with message
 
-  // const notificationData: NotificationData = {
-  //   type: notificationType,
-  //   fromUserId: userId,
-  //   toUserId: targetUserId,
-  //   message:
-  //     notificationType === 'follow'
-  //       ? `${userData.username} started following you.`
-  //       : `${userData.username} stopped following you.`,
-  //   timestamp: serverTimestamp()
-  // };
+  const notificationData: NotificationData = {
+    type: notificationType,
+    fromUserId: userId,
+    toUserId: targetUserId,
+    message:
+      notificationType === 'follow'
+        ? `${userData.username} started following you.`
+        : `${userData.username} stopped following you.`,
+    timestamp: serverTimestamp()
+  };
 
-  // // Call saveNotification with the correct parameters
-  // await saveNotification(notificationData, userId);
+  // Call saveNotification with the correct parameters
+  await saveNotification(notificationData, userId, undefined, targetUserId); // Pass targetUserId for follow/unfollow
 }
 
 export async function removeTweet(tweetId: string): Promise<void> {
@@ -524,20 +536,20 @@ export function manageLike(
     // Save notification
     // Create NotificationData object with message
 
-    // const notificationData: NotificationData = {
-    //   type: notificationType,
-    //   fromUserId: userId,
-    //   toUserId: null,
-    //   tweetId: tweetId,
-    //   message:
-    //     notificationType === 'like'
-    //       ? `${userData.username} liked your diary.`
-    //       : `${userData.username} disliked your diary.`,
-    //   timestamp: serverTimestamp()
-    // };
+    const notificationData: NotificationData = {
+      type: notificationType,
+      fromUserId: userId,
+      toUserId: '',
+      tweetId: tweetId,
+      message:
+        notificationType === 'like'
+          ? `${userData.username} liked your diary.`
+          : `${userData.username} disliked your diary.`,
+      timestamp: serverTimestamp()
+    };
 
-    // // Call saveNotification with the correct parameters
-    // await saveNotification(notificationData, userId);
+    // Call saveNotification with the correct parameters
+    await saveNotification(notificationData, userId, tweetId); // Pass tweetId for like/unlike
   };
 }
 
