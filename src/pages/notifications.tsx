@@ -239,6 +239,7 @@ import { RiUserUnfollowLine } from 'react-icons/ri';
 import { LuHeart } from 'react-icons/lu';
 import { LuHeartCrack } from 'react-icons/lu';
 import { IoHeartDislikeOutline } from 'react-icons/io5';
+import Link from 'next/link';
 
 export type Notification = {
   id: string;

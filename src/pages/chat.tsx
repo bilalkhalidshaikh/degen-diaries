@@ -1,5 +1,9 @@
 import { MainLayout } from '@components/layout/main-layout';
-import { ProtectedLayout, ChatLayout } from '@components/layout/common-layout'; // Update the import path accordingly
+import {
+  ProtectedLayout,
+  ChatLayout,
+  HomeLayout
+} from '@components/layout/common-layout'; // Update the import path accordingly
 import { SEO } from '@components/common/seo';
 import { MainContainer } from '@components/chat/main-container';
 import { MainHeader } from '@components/chat/main-header';
@@ -16,20 +20,57 @@ import {
   orderBy,
   doc,
   getFirestore,
-  deleteDoc,
-  updateDoc
+  getDocs,
+  updateDoc,
+  setDoc,
+  getDoc,
+  deleteDoc
 } from 'firebase/firestore';
-import { setDoc } from 'firebase/firestore';
-import { getDoc, getDocs } from 'firebase/firestore';
+
 import Link from 'next/link';
 import { Loading } from '@components/ui/loading';
-import useLongPress from '../lib/hooks/useLongPress'; // Make sure this path is correct
-import { Menu, MenuItem, MenuButton } from '@szhsin/react-menu';
 import '@szhsin/react-menu/dist/index.css';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { getMessaging, onMessage } from 'firebase/messaging';
-import { getFunctions, httpsCallable } from 'firebase/functions';
+import Button from '@mui/joy/Button';
+import IconButton from '@mui/joy/IconButton';
+import PushPinIcon from '@mui/icons-material/PushPin';
+import VolumeOffIcon from '@mui/icons-material/VolumeOff';
+import VolumeUpIcon from '@mui/icons-material/VolumeUp';
+import { RiUnpinFill } from 'react-icons/ri';
+import SendIcon from '@mui/icons-material/Send';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import Avatar from '@mui/joy/Avatar';
+import BottomNavigation from '@mui/material/BottomNavigation';
+import BottomNavigationAction from '@mui/material/BottomNavigationAction';
+import Input from '@mui/material/Input';
+import Typography from '@mui/material/Typography';
+import InputAdornment from '@mui/material/InputAdornment';
+import HomeIcon from '@mui/icons-material/Home';
+import ChatIcon from '@mui/icons-material/Chat';
+import NotificationsIcon from '@mui/icons-material/Notifications';
+import PhoneIcon from '@mui/icons-material/Phone';
+import VideoCamIcon from '@mui/icons-material/Videocam'; // Note: 'VideoCamIcon' should be 'Videocam'
+import SettingsIcon from '@mui/icons-material/Settings';
+import CloseIcon from '@mui/icons-material/Close';
+import PersonIcon from '@mui/icons-material/Person';
+import MailOutlineIcon from '@mui/icons-material/MailOutline';
+import PermIdentityOutlinedIcon from '@mui/icons-material/PermIdentityOutlined';
+import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
+import NotificationsNoneOutlinedIcon from '@mui/icons-material/NotificationsNoneOutlined';
+import MarkEmailUnreadIcon from '@mui/icons-material/MarkEmailUnread';
+import cn from 'clsx';
+import SearchIcon from '@mui/icons-material/Search';
+import DeleteIcon from '@mui/icons-material/Delete';
+import TextField from '@mui/material/TextField';
+import Grid from '@mui/material/Grid';
+import EmojiPicker from 'emoji-picker-react';
+import AttachFileIcon from '@mui/icons-material/AttachFile';
+import MicIcon from '@mui/icons-material/Mic';
+import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions';
+import MoreVertOutlinedIcon from '@mui/icons-material/MoreVertOutlined';
+import back from '../../public/back.png';
+import debounce from 'lodash.debounce';
 
 const db = getFirestore();
 
@@ -42,11 +83,47 @@ type User = {
   isMuted?: boolean;
   isDeleted?: boolean;
 };
-// Utility function to check if the device is mobile
-// Improved Mobile Device Detection
-function isMobileDevice() {
-  return window.matchMedia('only screen and (max-width: 760px)').matches;
+
+// Moved outside the component to avoid re-creation on every render
+// Utility function to get filtered and sorted chats
+const getFilteredAndSortedChats = (allChats, userChatsData) => {
+  const sortedChats = allChats
+    .filter((chat) => {
+      const chatState = userChatsData.get(chat.id);
+      return chatState ? !chatState.isDeleted : true;
+    })
+    .sort((a, b) => {
+      const aIsPinned = userChatsData.get(a.id)?.isPinned || false;
+      const bIsPinned = userChatsData.get(b.id)?.isPinned || false;
+      if (aIsPinned === bIsPinned) return 0;
+      return aIsPinned ? -1 : 1;
+    });
+  console.log('Sorted Chats:', sortedChats); // Debugging log
+  return sortedChats;
+};
+
+async function fetchUsers(currentUser) {
+  try {
+    // Create a reference to the 'users' collection
+    const userCol = collection(db, 'users');
+
+    // Fetch documents from the collection
+    const userSnapshot = await getDocs(userCol);
+
+    // Map the documents to an array of user data
+    const users = userSnapshot.docs.map((doc) => ({
+      ...doc.data(),
+      id: doc.id
+    }));
+
+    // Optionally, filter out the current user from the list
+    return users.filter((user) => user.id !== currentUser?.id);
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    return []; // Return an empty array in case of an error
+  }
 }
+
 export default function Chat({ chatId }: { chatId: string }): JSX.Element {
   const router = useRouter();
   // const { id } = router.query; // Remove this line
@@ -54,6 +131,8 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
   const [messages, setMessages] = useState<
     { text: string; sender: string; createdAt: Date }[]
   >([]);
+  // const [message, setMessage] = useState<string>('');
+
   const [message, setMessage] = useState<string>('');
   const [users, setUsers] = useState<User[]>([]);
   const [chatUser, setChatUser] = useState<User | null>(null);
@@ -61,6 +140,26 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
   const [showActionBar, setShowActionBar] = useState(false);
   const [selectedChatId, setSelectedChatId] = useState(null);
   const [recipientToken, setRecipientToken] = useState(null); // State to store the recipient's FCM token
+  const [showOptionsMenu, setShowOptionsMenu] = useState(null);
+  // State for managing search bar visibility
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isSearchActive, setIsSearchActive] = useState(false);
+
+  const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [displayedUsers, setDisplayedUsers] = useState<User[]>([]);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+
+  // New State to manage showing the options menu
+  const [showOptions, setShowOptions] = useState(false);
+  // New State to manage showing the feature header
+  const [showFeatureHeader, setShowFeatureHeader] = useState(false);
+  // State to manage the display of the feature header for an individual user
+  const [featureHeaderUserId, setFeatureHeaderUserId] = useState(null);
+
+  // Add a state to track the currently selected user for which the options should be shown
+  const [selectedUserIdForOptions, setSelectedUserIdForOptions] =
+    useState(null);
 
   useEffect(() => {
     if (!chatId && users.length > 0) {
@@ -68,22 +167,136 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
     }
   }, [chatId, users]);
 
+  // useEffect(() => {
+  //   const fetchUsers = async () => {
+  //     try {
+  //       const userCol = collection(db, 'users');
+  //       const userSnapshot = await getDocs(userCol);
+  //       const userList = userSnapshot.docs
+  //         .map((doc) => ({ ...doc.data(), id: doc.id }))
+  //         .filter((u) => u.id !== user?.id);
+  //       setUsers(userList);
+  //       // Initially display all users
+  //     } catch (error) {
+  //       console.error('Error fetching users:', error);
+  //     }
+  //   };
+
+  //   const fetchUserChatPreferences = async () => {
+  //     try {
+  //       const userChatRef = collection(db, 'users', user.id, 'userChats');
+  //       const userChatSnapshot = await getDocs(userChatRef);
+  //       const userChatsData = {};
+  //       userChatSnapshot.forEach((doc) => {
+  //         userChatsData[doc.id] = doc.data();
+  //       });
+  //       setChatStates(new Map(Object.entries(userChatsData)));
+  //     } catch (error) {
+  //       console.error('Error fetching user chat preferences:', error);
+  //     }
+  //   };
+
+  //   if (user) {
+  //     fetchUsers();
+  //     fetchUserChatPreferences();
+  //   }
+  // }, [user]);
+
+  // useEffect(() => {
+  // const updatedDisplayedChats = getFilteredAndSortedChats(allUsers, chatStates);
+  // setDisplayedUsers(updatedDisplayedChats);
+  // },[chatId,user, allUsers, chatStates]); // Add chatStates as a dependency
+
+  // useEffect for managing user data fetching and chat preferences
+  const fetchUserChatPreferences = async () => {
+    const userChatsRef = collection(db, 'users', user.id, 'userChats');
+    const userChatSnapshot = await getDocs(userChatsRef);
+    return userChatSnapshot.docs.reduce((acc, doc) => {
+      acc.set(doc.id, doc.data());
+      return acc;
+    }, new Map());
+  };
+
   useEffect(() => {
+    let isMounted = true;
+
     const fetchUsers = async () => {
-      try {
-        const userCol = collection(db, 'users');
-        const userSnapshot = await getDocs(userCol);
-        const userList = userSnapshot.docs
-          .map((doc) => ({ ...doc.data(), id: doc.id }))
-          .filter((u) => u.id !== user?.id);
-        setUsers(userList);
-      } catch (error) {
-        console.error('Error fetching users:', error);
+      const userCol = collection(db, 'users');
+      const userSnapshot = await getDocs(userCol);
+      return userSnapshot.docs
+        .map((doc) => ({
+          ...doc.data(),
+          id: doc.id
+        }))
+        .filter((u) => u.id !== user?.id);
+    };
+
+    // Updated function to fetch user chat preferences
+    // Define fetchUserChatPreferences outside of useEffect
+
+    // Now fetchUserChatPreferences can be safely used here
+    if (user && isMounted) {
+      Promise.all([fetchUsers(), fetchUserChatPreferences()])
+        .then(([users, chatPrefs]) => {
+          if (isMounted) {
+            setUsers(users);
+            setChatStates(new Map(Object.entries(chatPrefs)));
+          }
+        })
+        .catch(console.error);
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchData = async () => {
+      const fetchedUsers = await fetchUsers(user);
+      const chatPrefs = await fetchUserChatPreferences();
+      if (isMounted) {
+        setUsers(fetchedUsers);
+        setAllUsers(fetchedUsers);
+        setChatStates(chatPrefs);
       }
     };
 
-    fetchUsers();
+    if (user) {
+      fetchData();
+    }
+
+    return () => {
+      isMounted = false;
+    };
   }, [user]);
+
+  // Combine useEffects that deal with fetching users and chat states into one
+  // Updated useEffect for fetching users and their chat preferences
+
+  // useEffect for managing displayed users
+  // useEffect(() => {
+  //   const updatedDisplayedChats = getFilteredAndSortedChats(allUsers, chatStates);
+  //   setDisplayedUsers(updatedDisplayedChats);
+  // }, [allUsers, chatStates]);
+
+  // const getFilteredAndSortedChats = (allChats, userChatsData) => {
+  //   return allChats
+  //     .filter((chat) => {
+  //       const chatState = userChatsData.get(chat.id);
+  //       return chatState ? !chatState.isDeleted : true;
+  //     })
+  //     .sort((a, b) => {
+  //       const aIsPinned = userChatsData.get(a.id)?.isPinned || false;
+  //       const bIsPinned = userChatsData.get(b.id)?.isPinned || false;
+  //       return bIsPinned - aIsPinned;
+  //     });
+  // };
+
+  // Use this function where you render your chat list
+  const displayedChats = getFilteredAndSortedChats(allUsers, chatStates);
 
   useEffect(() => {
     if (chatId) {
@@ -145,20 +358,9 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
   const startChat = async (otherUserId) => {
     try {
       // Check if a chat already exists between the two users
+      // Check if a chat already exists
       const chatsCol = collection(db, 'chats');
       const chatsSnapshot = await getDocs(chatsCol);
-      // let chatDoc = chatsSnapshot.docs.find((doc) => {
-      //   const chatData = doc.data();
-      //   // return (
-      //   //   chatData.userIds.includes(user.id) &&
-      //   //   chatData.userIds.includes(otherUserId)
-      //   // );
-      //   return (
-      //     Array.isArray(chatData.userIds) &&
-      //     chatData.userIds.includes(user?.id) &&
-      //     chatData.userIds.includes(otherUserId)
-      //   );
-      // });
       let chatDoc = chatsSnapshot.docs.find((doc) => {
         const chatData = doc.data();
         console.log('chatData.userIds:', chatData.userIds); // Check the actual value
@@ -201,60 +403,17 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
       console.log('No users available to start a chat');
     }
   };
-
-  const messaging = getMessaging();
-
-  // const handleSendMessage = async () => {
-  //   if (!chatId || !user) {
-  //     console.log('Chat ID or user information is missing');
-  //     return;
-  //   }
-
-  //   const trimmedMessage = message.trim();
-
-  //   if (trimmedMessage) {
-  //     try {
-  //       await addDoc(collection(db, `chats/${chatId}/messages`), {
-  //         text: trimmedMessage,
-  //         sender: user.id, // Use the user's wallet address as the sender ID
-  //         createdAt: new Date()
-  //       });
-  //       setMessage('');
-  //       // Send push notification
-  //       const sendNotification = httpsCallable(
-  //         getFunctions(),
-  //         'sendNotification'
-  //       );
-  //       sendNotification({
-  //         token: recipientToken, // Token of the recipient
-  //         message: trimmedMessage // Your message content
-  //       })
-  //         .then((result) => {
-  //           // Notification sent
-  //         })
-  //         .catch((error) => {
-  //           // Handle errors
-  //         });
-
-  //       // Save the notification in Firestore
-  //       await addDoc(collection(db, 'notifications'), {
-  //         userId: recipientUserId,
-  //         message: trimmedMessage,
-  //         createdAt: new Date()
-  //       });
-  //     } catch (e) {
-  //       console.error('Error adding document: ', e);
-  //     }
-  //   } else {
-  //     console.log('Please type something to send');
-  //   }
-  // };
+  const handleChange = (e) => {
+    console.log('Message input changed: ', e.target.value);
+    setMessage(e.target.value);
+  };
 
   const handleSendMessage = async () => {
     if (!chatId || !user || !chatUser) {
       console.log('Chat ID, user information, or chatUser is missing');
       return;
     }
+    console.log('Sending message: ', message);
 
     const trimmedMessage = message.trim();
     if (trimmedMessage) {
@@ -268,32 +427,7 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
             createdAt: new Date()
           }
         );
-
-        // Retrieve the recipient's FCM token from Firestore
-        const recipientDoc = await getDoc(doc(db, `users/${chatUser.id}`));
-        if (recipientDoc.exists()) {
-          const recipientToken = recipientDoc.data().fcmToken;
-
-          // Send push notification (Assuming you have a cloud function or API to handle this)
-          const sendNotification = httpsCallable(
-            getFunctions(),
-            'sendNotification'
-          );
-          sendNotification({
-            token: recipientToken,
-            message: trimmedMessage
-          });
-
-          // Save the notification in Firestore
-          await addDoc(collection(db, 'notifications'), {
-            userId: chatUser.id,
-            message: trimmedMessage,
-            createdAt: new Date()
-            // Other relevant details
-          });
-        }
-
-        // Reset message input
+        console.log('message', message);
         setMessage('');
       } catch (e) {
         console.error('Error sending message: ', e);
@@ -307,6 +441,17 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
     if (e.key === 'Enter') {
       handleSendMessage();
     }
+  };
+  useEffect(() => {
+    console.log('Current message: ', message);
+  }, [message]);
+
+  useEffect(() => {
+    console.log('Emoji Picker visibility: ', showEmojiPicker);
+  }, [showEmojiPicker]);
+
+  const toggleOptionsMenu = (messageId) => {
+    setShowOptionsMenu(showOptionsMenu === messageId ? null : messageId);
   };
 
   if (!chatId) {
@@ -393,169 +538,217 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
     setUsers(userList); // Assuming setUsers is your state updating function
   };
 
-  const [searchTerm, setSearchTerm] = useState('');
-  const filteredUsers = users.filter((user) =>
-    user.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // const [searchTerm, setSearchTerm] = useState('');
+  // const filteredUsers = users.filter((user) =>
+  //   user.name.toLowerCase().includes(searchTerm.toLowerCase())
+  // );
 
-  // Function to format the date
+  const updateChatState = (userId, updates) => {
+    setChatStates((prevStates) => {
+      const updatedStates = new Map(prevStates);
+      updatedStates.set(userId, { ...updatedStates.get(userId), ...updates });
+      return updatedStates;
+    });
+  };
 
-  // Custom styles for chat bubbles and the chat container
-  // const chatBubbleStyles = (isCurrentUser: boolean) =>
-  //   `max-w-xs md:max-w-md lg:max-w-lg break-words rounded-lg p-4 ${
-  //     isCurrentUser ? 'bg-blue-500 text-white' : 'bg-gray-700 text-gray-300'
-  //   }`;
-  // // Function to delete a chat
-  // const deleteChat = async (chatId) => {
-  //   if (!chatId) return;
+  const fetchChatIdsForUser = async (userId) => {
+    const userChatsRef = collection(db, 'users', userId, 'userChats');
+    const userChatsSnapshot = await getDocs(userChatsRef);
+    const chatIds = userChatsSnapshot.docs.map((doc) => doc.id);
+    return chatIds;
+  };
 
-  //   try {
-  //     await deleteDoc(doc(db, 'chats', chatId));
-  //     console.log(`Chat with ID ${chatId} deleted.`);
-  //     // You may want to navigate the user away from the chat after deletion
-  //   } catch (error) {
-  //     console.error('Error deleting chat:', error);
-  //   }
-  // };
+  // Function to update the chatStates state immediately
+  // Function to update the chatStates state immediately
+  // Update chatStatesImmediate function
+  // Ensure chat states are updated immediately and UI is re-rendered
+  // Update chatStatesImmediate function
 
-  // Function to pin a chat
-  // Function to pin/unpin a chat
+  // Function to update displayed chats based on chat states
+  const updateDisplayedChats = () => {
+    const updatedDisplayedChats = getFilteredAndSortedChats(
+      allUsers,
+      chatStates
+    );
+    setDisplayedUsers(updatedDisplayedChats);
+  };
+  const updateChatStatesImmediate = (chatId, updates) => {
+    setChatStates((prevStates) => {
+      const updatedStates = new Map(prevStates);
+      updatedStates.set(chatId, {
+        ...(updatedStates.get(chatId) || {}),
+        ...updates
+      });
+      return updatedStates;
+    });
+    // Trigger UI update
+    updateDisplayedChats();
+  };
 
-  // const togglePinChat = async (chatId) => {
-  //   try {
-  //     const chatRef = doc(db, 'chats', chatId);
-  //     const chatDoc = await getDoc(chatRef);
-  //     const isPinned = chatDoc.data()?.pinned || false;
-
-  //     // Update Firestore
-  //     await updateDoc(chatRef, { isPinned: !isPinned });
-
-  //     // Update local state to reflect UI change
-  //     setUsers((prevUsers) => {
-  //       return [...prevUsers]
-  //         .sort((a, b) => {
-  //           if (b.isPinned && !a.isPinned) return 1;
-  //           if (a.isPinned && !b.isPinned) return -1;
-  //           return 0;
-  //         });
-  //     });
-
-  //   } catch (error) {
-  //     console.error('Error toggling pin:', error);
-  //      // Provide user feedback
-  //   toast.error('Error pinning chat');
-  //   }
-  // };
-  const togglePinChat = async (chatId) => {
+  // Fetch chat states from Firestore
+  const fetchChatStates = async () => {
+    const userChatRef = collection(db, 'users', user?.id, 'userChats');
+    const userChatSnapshot = await getDocs(userChatRef);
+    return userChatSnapshot.docs.reduce((acc, doc) => {
+      acc[doc.id] = doc.data();
+      return acc;
+    }, {});
+  };
+  // Chat actions (pin, mute, delete)
+  const performChatAction = async (userId, action) => {
     try {
-      const chatRef = doc(db, 'chats', chatId);
-      const chatDoc = await getDoc(chatRef);
-      const isPinned = chatDoc.data()?.isPinned || false;
+      // Perform action (e.g., togglePinChat)
+      await action(userId);
 
-      await updateDoc(doc(db, 'users', chatId), { isPinned: !isPinned });
-      console.log(`Chat ${chatId} pin status updated to: ${!isPinned}`);
+      // Fetch and update chat states
+      const updatedChatStates = await fetchChatStates();
+      setChatStates(new Map(Object.entries(updatedChatStates)));
 
-      // Fetch and update the state with the latest data
-      fetchAndUpdateUsers(); // Make sure this function re-fetches users and updates the state
-
-      // Update local state to reflect UI change
-      setUsers((prevUsers) => {
-        // Apply the pinning change to the specific user
-        const updatedUsers = prevUsers.map((chat) =>
-          chat.id === chatId ? { ...chat, isPinned: !isPinned } : chat
-        );
-        // Sort users to move pinned chats to the top
-        return updatedUsers.sort((a, b) => {
-          if (a.isPinned && !b.isPinned) {
-            return -1;
-          }
-          if (!a.isPinned && b.isPinned) {
-            return 1;
-          }
-          return 0;
-        });
+      // Trigger UI update
+      const updatedDisplayedChats = getFilteredAndSortedChats(
+        allUsers,
+        chatStates
+      );
+      setDisplayedUsers(updatedDisplayedChats);
+    } catch (error) {
+      console.error('Error performing action:', error);
+    }
+  };
+  // Function to toggle pin for a chat
+  const togglePinChat = async (userId) => {
+    try {
+      const chatIds = await fetchChatIdsForUser(userId);
+      const promises = chatIds.map(async (chatId) => {
+        const userChatRef = doc(db, 'users', user.id, 'userChats', chatId);
+        const userChatDoc = await getDoc(userChatRef);
+        if (userChatDoc.exists()) {
+          const isPinned = userChatDoc.data().isPinned || false;
+          await updateDoc(userChatRef, { isPinned: !isPinned });
+          updateChatStatesImmediate(chatId, { isPinned: !isPinned });
+          toast.success(
+            `Chat ${isPinned ? 'unpinned' : 'pinned'} successfully`
+          );
+          console.log(`Chat ${isPinned ? 'unpinned' : 'pinned'} successfully`);
+        }
       });
 
-      // toast.success('Chat pin status updated successfully');
+      await Promise.all(promises);
+      updateDisplayedChats(); // Add this line after updating chat states
     } catch (error) {
-      console.error('Error toggling pin:', error);
-      toast.error('Error pinning chat');
+      console.error('Error in toggling pin:', error);
     }
   };
 
-  // const toggleMuteChat = async (chatId) => {
-  //   try {
-  //     const chatRef = doc(db, 'chats', chatId);
-  //     const chatDoc = await getDoc(chatRef);
-  //     const isMuted = chatDoc.data()?.muted || false;
-
-  //     await updateDoc(chatRef, { muted: !isMuted });
-
-  //     // Update local state
-  //     setUsers((prevUsers) =>
-  //       prevUsers.map((user) =>
-  //         user.id === chatId ? { ...user, isMuted: !isMuted } : user
-  //       )
-  //     );
-  //   } catch (error) {
-  //     console.error('Error toggling mute:', error);
-  //   }
-  // };
-  const toggleMuteChat = async (chatId) => {
+  // Function to toggle mute for a chat
+  const toggleMuteChat = async (userId) => {
     try {
-      const chatRef = doc(db, 'chats', chatId);
-      const chatDoc = await getDoc(chatRef);
-      const isMuted = chatDoc.data()?.isMuted || false;
+      const chatIds = await fetchChatIdsForUser(userId);
+      const promises = chatIds.map(async (chatId) => {
+        const userChatRef = doc(db, 'users', user.id, 'userChats', chatId);
+        const userChatDoc = await getDoc(userChatRef);
+        if (userChatDoc.exists()) {
+          const isMuted = userChatDoc.data().isMuted || false;
+          await updateDoc(userChatRef, { isMuted: !isMuted });
+          updateChatStatesImmediate(chatId, { isMuted: !isMuted });
+          toast.success(`Chat ${isMuted ? 'unmuted' : 'muted'} successfully`);
+          console.log(`Chat ${isMuted ? 'unmuted' : 'muted'} successfully`);
+        }
+      });
 
-      // Update Firestore
-      await updateDoc(doc(db, 'users', chatId), { isMuted: !isMuted });
+      await Promise.all(promises);
+      updateDisplayedChats(); // Add this line after updating chat states
+    } catch (error) {
+      console.error('Error in toggling mute:', error);
+    }
+  };
+  // Function to delete a chat for a user
+  const deleteUserChat = async (userId) => {
+    try {
+      const chatIds = await fetchChatIdsForUser(userId);
+      const promises = chatIds.map(async (chatId) => {
+        const userChatRef = doc(db, 'users', user.id, 'userChats', chatId);
+        const userChatDoc = await getDoc(userChatRef);
+        if (userChatDoc.exists()) {
+          await updateDoc(userChatRef, { isDeleted: true });
+          updateChatStatesImmediate(chatId, { isDeleted: true });
+          toast.success(`Chat deleted successfully`);
+          console.log(`Chat deleted successfully`);
+        }
+      });
 
-      // Update local state
-      setUsers((prevUsers) =>
-        prevUsers.map((chat) =>
-          chat.id === chatId ? { ...chat, isMuted: !isMuted } : chat
-        )
+      await Promise.all(promises);
+      updateDisplayedChats(); // Add this line after updating chat states
+    } catch (error) {
+      console.error('Error in deleting chat:', error);
+    }
+  };
+
+  // useEffect(() => {
+  //   // This will run every time `chatStates` changes.
+  //   const updatedDisplayedChats = getFilteredAndSortedChats(
+  //     allUsers,
+  //     chatStates
+  //   );
+  //   setDisplayedUsers(updatedDisplayedChats);
+  // }, [chatStates]);
+
+  // useEffect to update the displayed chats whenever chatStates changes
+  // useEffect(() => {
+  //   const updatedDisplayedChats = getFilteredAndSortedChats(
+  //     allUsers,
+  //     chatStates
+  //   );
+  //   setDisplayedUsers(updatedDisplayedChats);
+  // }, [allUsers, user]);
+
+  // Inside useEffect for updating displayedUsers based on searchTerm
+  // useEffect(() => {
+  //   let filtered = allUsers;
+  //   if (searchTerm) {
+  //     filtered = allUsers.filter((user) =>
+  //       user.name.toLowerCase().includes(searchTerm.toLowerCase())
+  //     );
+  //   }
+  //   setDisplayedUsers(getFilteredAndSortedChats(filtered, chatStates));
+  // }, [searchTerm, allUsers, chatStates, getFilteredAndSortedChats]);
+
+  const performActionAndUpdateUI = async (userId, action) => {
+    try {
+      // Perform the action (e.g., togglePinChat, toggleMuteChat, deleteUserChat)
+      await action(userId);
+
+      // Hide the feature header and show the main header
+      setFeatureHeaderUserId(null);
+      const updatedDisplayedChats = getFilteredAndSortedChats(
+        allUsers,
+        chatStates
       );
-
-      // toast.success('Chat mute status updated successfully');
+      setDisplayedUsers(updatedDisplayedChats);
+      // Update the chat states and UI
+      // ... (Update the chat states as needed)
     } catch (error) {
-      console.error('Error toggling mute:', error);
-      toast.error('Error muting chat');
+      console.error('Error performing action:', error);
     }
   };
 
-  // const deleteChat = async (chatId) => {
-  //   try {
-  //     const chatRef = doc(db, 'chats', chatId);
-  //     await deleteDoc(chatRef);
+  // Adjusted useEffect to ensure chat list is always sorted
+  // useEffect(() => {
+  //   const updatedDisplayedChats = getFilteredAndSortedChats(allUsers, chatStates);
 
-  //     // Update local state to mark the chat as deleted
-  //     setUsers((prevUsers) =>
-  //       prevUsers.map((user) =>
-  //         user.id === chatId ? { ...user, isDeleted: true } : user
-  //       )
-  //     );
-  //   } catch (error) {
-  //     console.error('Error deleting chat:', error);
+  //   // Only update the state if the new chats are different from the current ones
+  //   if (JSON.stringify(displayedUsers) !== JSON.stringify(updatedDisplayedChats)) {
+  //     setDisplayedUsers(updatedDisplayedChats);
   //   }
-  // };
+  // }, [allUsers, chatStates]); // Ensure dependencies are correct and necessary
 
-  const deleteChat = async (chatId) => {
-    try {
-      const chatRef = doc(db, 'chats', chatId);
-
-      // Update Firestore
-      await updateDoc(doc(db, 'users', chatId), { isDeleted: true });
-
-      // Update local state to remove the chat
-      setUsers((prevUsers) => prevUsers.filter((chat) => chat.id !== chatId));
-
-      toast.success('Chat deleted successfully');
-    } catch (error) {
-      console.error('Error deleting chat:', error);
-      toast.error('Error deleting chat');
-    }
-  };
+  // Update displayed users based on chat states
+  // useEffect(() => {
+  //   const updatedDisplayedChats = getFilteredAndSortedChats(
+  //     allUsers,
+  //     chatStates
+  //   );
+  //   setDisplayedUsers(updatedDisplayedChats); // Correct usage of state update
+  // }, [allUsers, user]);
 
   const sortUsers = (users) => {
     return users.sort((a, b) => {
@@ -563,60 +756,28 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
     });
   };
 
-  // Long press handlers
-  // const onLongPress = (event: Event) => {
-  //   event.preventDefault();
-  //   // Show chat options here (e.g., using a modal or context menu)
-  //   console.log('Long press detected on chat', chatId);
-  //   // You would show options to pin, mute, or delete the chat
-  // };
-
-  const onClick = () => {
-    // Handle the click event
-    console.log('Clicked on chat', chatId);
-  };
-
-  // const longPressEvent = useLongPress(onLongPress, onClick);
-
   // This function will update the local state for a specific chat ID.
-  const updateChatState = (chatId, updates) => {
-    setChatStates((prevStates) => {
-      const newState = new Map(prevStates);
-      newState.set(chatId, { ...(newState.get(chatId) || {}), ...updates });
-      return newState;
-    });
-  };
 
-  // Chat action functions
   const handlePinChat = async (chatIdToPin) => {
     if (!chatIdToPin) {
       console.error('No chat ID provided for pinning.');
       return;
     }
-    const currentChatState = chatStates.get(chatId) || {};
-    const isPinned = currentChatState.isPinned || false;
-    updateChatState(chatId, { isPinned: !isPinned });
-    const currentChat = users.find((user) => user.id === chatIdToPin);
-    if (!currentChat) return;
 
-    const newStatus = !currentChat.isPinned;
-    updateChatState(chatIdToPin, { isPinned: newStatus });
-    // Immediately update UI after pinning
-    setUsers((prevUsers) => {
-      return prevUsers
-        .map((user) => {
-          if (user.id === chatIdToPin) {
-            return { ...user, isPinned: !user.isPinned };
-          }
-          return user;
-        })
-        .sort((a, b) => {
-          return (b.isPinned ? 1 : 0) - (a.isPinned ? 1 : 0);
-        });
-    });
-    await togglePinChat(chatIdToPin);
-    toast.success('Chat pinned successfully');
-    setShowActionBar(false);
+    if (!chatId) return;
+    const chatRef = doc(db, 'chats', chatId);
+    const chatDoc = await getDoc(chatRef);
+    const isPinned = chatDoc.data().isPinned || false;
+    await updateDoc(chatRef, { isPinned: !isPinned });
+
+    // Update local state
+    setUsers((prevUsers) =>
+      prevUsers.map((user) =>
+        user.id === chatIdToPin ? { ...user, isPinned: !isPinned } : user
+      )
+    );
+
+    toast.success(`Chat ${isPinned ? 'unpinned' : 'pinned'} successfully`);
   };
 
   const handleMuteChat = async (chatIdToMute) => {
@@ -624,195 +785,47 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
       console.error('No chat ID provided for muting.');
       return;
     }
-    const currentChatState = chatStates.get(chatId) || {};
-    const isMuted = currentChatState.isMuted || false;
-    updateChatState(chatId, { isMuted: !isMuted });
-    const currentChat = users.find((user) => user.id === chatIdToMute);
-    if (!currentChat) return;
 
-    const newStatus = !currentChat.isMuted;
+    const chatRef = doc(db, 'users', chatIdToMute);
+    const chatDoc = await getDoc(chatRef);
+    const isCurrentlyMuted = chatDoc.data()?.isMuted || false;
 
-    await toggleMuteChat(chatIdToMute); // Assuming this updates Firestore
-    setShowActionBar(false);
+    await updateDoc(chatRef, { isMuted: !isCurrentlyMuted });
 
-    // After muting, update and sort the user list
-    setUsers((prevUsers) => {
-      const updatedUsers = prevUsers.map((chat) =>
-        chat.id === chatIdToMute ? { ...chat, isMuted: newStatus } : chat
-      );
-      return sortUsers(updatedUsers); // Sort the updated user list
-    });
-  };
+    // Update local state
+    setUsers((prevUsers) =>
+      prevUsers.map((user) =>
+        user.id === chatIdToMute
+          ? { ...user, isMuted: !isCurrentlyMuted }
+          : user
+      )
+    );
 
-  const handleDeleteChat = async (chatIdToDelete) => {
-    if (!chatIdToDelete) {
-      console.error('No chat ID provided for deleting.');
-      return;
-    }
-
-    await deleteChat(chatIdToDelete); // Assuming this updates Firestore
-    updateChatState(chatId, { isDeleted: true });
-    setShowActionBar(false);
-
-    // After deleting, update and sort the user list
-    setUsers((prevUsers) => {
-      const updatedUsers = prevUsers.filter(
-        (chat) => chat.id !== chatIdToDelete
-      );
-      return sortUsers(updatedUsers); // Sort the updated user list
-    });
-  };
-
-  // Add this function within your Chat component
-  const onChatAction = (action: 'pin' | 'mute' | 'delete', chatId: string) => {
-    switch (action) {
-      case 'pin':
-        togglePinChat(chatId);
-        break;
-      case 'mute':
-        toggleMuteChat(chatId);
-        break;
-      case 'delete':
-        deleteChat(chatId);
-        break;
-      default:
-        console.error('Invalid action');
-    }
-  };
-
-  // Context Menu Component
-  // const ChatContextMenu = ({ x, y, onPin, onMute, onDelete, visible }) => {
-  //   if (!visible) return null;
-
-  //   return (
-  //     <div style={{ position: 'fixed', left: `${contextMenu.x}px`, top: `${contextMenu.y}px` }}>
-  //       <Menu
-  //        menuButton={
-  //         <MenuButton className='context-menu-button'></MenuButton>
-  //       }
-  //       transition
-  //       >
-  //         <MenuItem onClick={() => onPin()}>Pin</MenuItem>
-  //         <MenuItem onClick={() => onMute()}>Mute</MenuItem>
-  //         <MenuItem onClick={() => onDelete()}>Delete</MenuItem>
-  //       </Menu>
-  //     </div>
-  //   );
-  // };
-
-  const ChatContextMenu = ({ x, y, onPin, onMute, onDelete, visible }) => {
-    if (!visible) return null;
-
-    const handleClick = (action, e) => {
-      e.stopPropagation(); // Prevent event from bubbling up
-      action();
-      hideContextMenu(); // Hide context menu after action
-    };
-
-    return (
-      <div
-        style={{
-          position: 'fixed',
-          left: `${x}px`,
-          top: `${y}px`,
-          zIndex: 1000
-        }}
-      >
-        <ul
-          style={{
-            listStyleType: 'none',
-            padding: '10px',
-            backgroundColor: '#111827',
-            borderRadius: '5px',
-            boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
-          }}
-        >
-          <li
-            style={{ padding: '5px' }}
-            onClick={(e) => handleClick(() => onPin(), e)}
-          >
-            Pin
-          </li>
-          <li
-            style={{ padding: '5px' }}
-            onClick={(e) => handleClick(() => onMute(), e)}
-          >
-            Mute
-          </li>
-          <li
-            style={{ padding: '5px' }}
-            onClick={(e) => handleClick(() => onDelete(), e)}
-          >
-            Delete
-          </li>
-        </ul>
-      </div>
+    toast.success(
+      `Chat ${isCurrentlyMuted ? 'unmuted' : 'muted'} successfully`
     );
   };
 
-  const [contextMenu, setContextMenu] = useState({
-    visible: false,
-    x: 0,
-    y: 0,
-    chatId: ''
-  });
-  const showContextMenu = (e, chatId) => {
-    if (!isMobileDevice()) {
-      e.preventDefault();
-      e.stopPropagation();
-      setContextMenu({
-        visible: true,
-        x: e.clientX,
-        y: e.clientY,
-        chatId: chatId
-      });
-    }
-  };
+  // const handleDeleteChat = async (chatIdToDelete) => {
+  //   if (!chatIdToDelete) {
+  //     console.error('No chat ID provided for deleting.');
+  //     return;
+  //   }
 
-  // Hide context menu when clicking anywhere in the document
-  useEffect(() => {
-    const hideMenu = () => setContextMenu({ ...contextMenu, visible: false });
-    document.addEventListener('click', hideMenu);
-    return () => document.removeEventListener('click', hideMenu);
-  }, [contextMenu]); // Include contextMenu in dependency array
+  //   await deleteChat(chatIdToDelete); // Assuming this updates Firestore
+  //   updateChatState(chatId, { isDeleted: true });
+  //   setShowActionBar(false);
 
-  const hideContextMenu = () => {
-    setContextMenu({ ...contextMenu, visible: false });
-  };
-  const onLongPress = (chatId) => {
-    setShowActionBar(true);
-    setContextMenu({ ...contextMenu, chatId });
-  };
-  // Define the onLongPressMobile handler
-  const onLongPressMobile = (chatId) => {
-    setSelectedChatId(chatId);
-    setShowActionBar(true);
-  };
+  //   // After deleting, update and sort the user list
+  //   setUsers((prevUsers) => {
+  //     const updatedUsers = prevUsers.filter(
+  //       (chat) => chat.id !== chatIdToDelete
+  //     );
+  //     return sortUsers(updatedUsers); // Sort the updated user list
+  //   });
+  // };
 
-  const handleLongPressMobile = useCallback((chatId) => {
-    // Only apply the behavior if on a mobile device
-    if (isMobileDevice()) {
-      console.log(`Long press on chat ID: ${chatId}`);
-      // Update state to indicate the chat item is being long-pressed
-      // For example, you can use a state to store the ID of the chat being long-pressed
-      setSelectedChatId(chatId);
-      setShowActionBar(true);
-    }
-  }, []);
-
-  const handleOnClick = useCallback((event, chatId) => {
-    // Handle the click action here
-    console.log(`Click on chat ID: ${chatId}`);
-    // You can navigate, set state, or perform other actions
-  }, []);
-
-  // Modified Long Press Event
-  // In Chat component
-  // Outside your component
-  // Ensure longPressHandlers is set up correctly
-  const longPressHandlers = useLongPress(handleLongPressMobile, handleOnClick, {
-    delay: 500 // Adjust the delay as per your requirement
-  });
+  // Add this function within your Chat component
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -825,6 +838,8 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
         }));
         const sortedUsers = sortUsers(userList); // Sort users after fetching
         setUsers(sortedUsers);
+        setAllUsers(userList);
+        setDisplayedUsers(userList);
       } catch (error) {
         console.error('Error fetching users:', error);
       }
@@ -832,279 +847,640 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
 
     fetchUsers();
   }, [user]); // Dependency array
+  // Search functionality
+  // Search functionality: Filter displayed users based on search term
+  // Search functionality: Update displayed users based on search term
+  // useEffect for updating displayedUsers based on searchTerm
+  // Combine all useEffects that setDisplayedUsers into one
+  // Remove duplicate useEffects that update displayedUsers
+  useEffect(() => {
+    let updatedDisplayedChats = getFilteredAndSortedChats(allUsers, chatStates);
 
-  const TopActionBar = ({ onPin, onMute, onDelete }) => {
+    // Apply additional filters based on searchTerm
+    if (searchTerm) {
+      updatedDisplayedChats = updatedDisplayedChats.filter((user) =>
+        user.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    setDisplayedUsers(updatedDisplayedChats);
+  }, [allUsers, chatStates, searchTerm, updateDisplayedChats]); // Add updateDisplayedChats as a dependency
+
+  // Inside your component
+  const handleNavigationChange = (event, newValue) => {
+    router.push(newValue);
+  };
+
+  // Additional styles for the bottom bar and message header
+  const bottomBarStyle = {
+    position: 'fixed',
+    bottom: 0,
+    width: '100%',
+    bgcolor: '#121212', // Adjust background color
+    color: '#FFFFFF' // Adjust icon color
+  };
+
+  const messageHeaderStyle = {
+    position: 'sticky',
+    top: 0,
+    zIndex: 10,
+    backgroundColor: '#121212',
+    padding: '10px'
+    // other styles...
+  };
+  // Custom styles for the emoji picker
+  const emojiPickerStyle = {
+    position: 'absolute',
+    bottom: '60px', // Adjust this value as needed
+    left: '0',
+    right: '0',
+    width: '100%',
+    maxHeight: '250px',
+    overflowY: 'auto',
+    backgroundColor: 'rgba(18, 18, 18, 0.123)',
+    border: '1px solid rgba(18, 18, 18, 0.123)',
+    borderRadius: '8px',
+    display: 'flex',
+    justifyContent: 'center',
+    zIndex: 5 // Ensure this is below the message input's zIndex
+    // Adjust this value as needed
+    // Center the picker in the available horizontal space
+  };
+  // const filteredUsers = searchTerm
+  //   ? users.filter((user) =>
+  //       user.name.toLowerCase().includes(searchTerm.toLowerCase())
+  //     )
+  //   : users;
+
+  const handleSearchChange = (event) => {
+    setSearchTerm(event.toLowerCase());
+  };
+
+  const renderSearchBar = () => (
+    <div
+      style={{
+        position: 'sticky',
+        top: '50px',
+        zIndex: 10,
+        backgroundColor: '#121212',
+        padding: '10px',
+        width: '100%'
+      }}
+    >
+      <TextField
+        autoFocus
+        fullWidth
+        size='small'
+        variant='outlined'
+        placeholder='Search users...'
+        value={searchTerm}
+        onChange={(e) => handleSearchChange(e.target.value)}
+        InputProps={{
+          endAdornment: (
+            <InputAdornment position='end'>
+              <IconButton onClick={() => setIsSearchActive(false)}>
+                <CloseIcon />
+              </IconButton>
+            </InputAdornment>
+          )
+        }}
+        style={{
+          backgroundColor: 'white',
+          borderRadius: '20px',
+          outline: 'none !important',
+          border: 'none'
+        }} // Add custom styles for search bar
+      />
+    </div>
+  );
+
+  // Conditional rendering of MainHeader
+  // Conditional rendering of MainHeader // Conditional Rendering of MainHeader
+  const renderMainHeader = () => {
+    if (featureHeaderUserId !== null) return null;
+
+    if (!showChatBox) {
+      return (
+        <MainHeader
+          useMobileSidebar
+          title={<> </>}
+          className='position-fixed bg-rgba(18, 18, 18, 0.123) left-0 right-0 top-0 z-50 flex items-center justify-between border-b border-gray-700 p-4'
+        >
+          <Grid container alignItems='center' justifyContent='space-between'>
+            <Grid item>
+              <Typography
+                sx={{
+                  color: '#eee',
+                  fontSize: '1.6rem',
+                  marginLeft: '-1.2rem'
+                }}
+              >
+                Messages
+              </Typography>
+            </Grid>
+            <Grid item>
+              <IconButton onClick={() => setIsSearchActive(!isSearchActive)}>
+                <SearchIcon sx={{ color: '#eee', fontSize: '2rem' }} />
+              </IconButton>
+            </Grid>
+          </Grid>
+        </MainHeader>
+      );
+    }
+    return null;
+  };
+
+  const BottomBar = () => (
+    <BottomNavigation
+      showLabels
+      value={router.pathname}
+      onChange={handleNavigationChange}
+      sx={{
+        position: 'fixed',
+        bottom: 0,
+        width: '100%',
+        bgcolor: 'rgba(18, 18, 18, 0.123)',
+        borderTop: '1px solid #777',
+        paddingTop: '0.8rem'
+      }}
+      className={cn(
+        'hover-animation even z-10 px-4 py-2 backdrop-blur-md',
+        'bg-main-background/60'
+      )}
+    >
+      <BottomNavigationAction
+        label='Home'
+        value='/home'
+        icon={<HomeOutlinedIcon sx={{ color: '#eee', fontSize: '2rem' }} />}
+      />
+      <BottomNavigationAction
+        label='Notifications'
+        value='/notifications'
+        icon={
+          <NotificationsNoneOutlinedIcon
+            sx={{ color: '#eee', fontSize: '2rem' }}
+          />
+        }
+      />
+      <BottomNavigationAction
+        label='Chat'
+        value='/chat'
+        icon={<MarkEmailUnreadIcon sx={{ color: '#fff', fontSize: '2rem' }} />}
+      />
+      <BottomNavigationAction
+        label='Profile'
+        value={`/user/${user?.username}`}
+        icon={
+          <PermIdentityOutlinedIcon sx={{ color: '#eee', fontSize: '2rem' }} />
+        }
+      />
+    </BottomNavigation>
+  );
+
+  const handleEmojiClick = (event, emojiObject) => {
+    console.log(emojiObject); // Check what's being received
+    setMessage((prevMessage) => `${prevMessage}${emojiObject.emoji}`);
+  };
+
+  // Function to handle showing options for a specific user
+  // const handleShowOptions = (userId) => {
+  //   console.log(`More options for user ${userId}`);
+  //   setSelectedUserIdForOptions(userId);
+  //   // Logic to show options like pin, mute, and delete
+  // };
+  // Function to show options menu
+  // Toggle options menu
+  // Function to handle the MoreVert click
+  const handleMoreVertClick = (userId) => {
+    console.log('Clicked MoreVert for user ID: ', userId);
+    if (featureHeaderUserId === userId) {
+      setFeatureHeaderUserId(null);
+    } else {
+      setFeatureHeaderUserId(userId);
+    }
+  };
+
+  const handleShowOptions = (userId) => {
+    console.log(`More options for user ${userId}`);
+    setSelectedUserIdForOptions(userId);
+  };
+
+  useEffect(() => {
+    console.log('featureHeaderUserId changed: ', featureHeaderUserId);
+  }, [featureHeaderUserId]);
+
+  useEffect(() => {
+    console.log('selectedUserIdForOptions changed: ', selectedUserIdForOptions);
+  }, [selectedUserIdForOptions]);
+
+  // Add event listener to hide options when clicked outside
+  // Function to hide options menu
+  const hideOptionsMenu = () => {
+    setShowOptions(false);
+  };
+  useEffect(() => {
+    window.addEventListener('click', hideOptionsMenu);
+    return () => {
+      window.removeEventListener('click', hideOptionsMenu);
+    };
+  }, []);
+  // Prevent event bubbling to window when clicking on MoreVert icon
+  const stopPropagation = (e) => {
+    e.stopPropagation();
+  };
+
+  // Toggle feature header
+  const toggleFeatureHeader = (userId) => {
+    setShowFeatureHeader(!showFeatureHeader);
+    handleMoreVertClick(userId); // Call existing function to handle more vert click
+  };
+
+  // Render function for the options menu
+  // Render Feature Header
+  // Render Function for Feature Header
+  // Render Function for Feature Header with Glassmorphism
+  const renderFeatureHeader = () => {
+    if (featureHeaderUserId === null) return null;
+
+    const isPinned = chatStates.get(featureHeaderUserId)?.isPinned;
+    const isMuted = chatStates.get(featureHeaderUserId)?.isMuted;
+
     return (
-      <div className='fixed bottom-10 left-1/2 z-50 flex -translate-x-1/2 transform items-center justify-around space-x-4 rounded bg-gray-400 p-3 shadow-lg'>
-        <button onClick={onPin} className='focus:outline-none'>
-          <img
-            src='https://img.icons8.com/?size=50&id=476&format=png'
-            alt='Pin'
-            className='h-8 w-8'
-          />
-        </button>
-        <button onClick={onMute} className='focus:outline-none'>
-          <img
-            src='https://img.icons8.com/?size=50&id=644&format=png'
-            alt='Mute'
-            className='h-8 w-8'
-          />
-        </button>
-        <button onClick={onDelete} className='focus:outline-none'>
-          <img
-            src='https://img.icons8.com/?size=24&id=99933&format=png'
-            alt='Delete'
-            className='h-8 w-8'
-          />
-        </button>
+      <div
+        className='feature-header'
+        style={{
+          backdropFilter: 'blur(10px)', // Glassmorphism effect
+          backgroundColor: 'rgba(255, 255, 255, 0.2)', // Semi-transparent background
+          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)', // Soft shadow
+          borderRadius: '15px', // Rounded corners
+          padding: '10px', // Padding around the content
+          display: 'flex', // Align items in a row
+          justifyContent: 'space-evenly', // Even spacing between items
+          alignItems: 'center', // Center items vertically
+          margin: '10px', // Margin from the edges
+          color: 'white' // Text color
+        }}
+        onClick={stopPropagation}
+      >
+        <IconButton onClick={() => setFeatureHeaderUserId(null)}>
+          <ArrowBackIcon style={{ color: 'white' }} />
+        </IconButton>
+        <IconButton
+          onClick={() =>
+            performActionAndUpdateUI(featureHeaderUserId, togglePinChat)
+          }
+        >
+          {isPinned ? <RiUnpinFill /> : <PushPinIcon sx={{ color: 'white' }} />}
+        </IconButton>
+        <IconButton
+          onClick={() =>
+            performActionAndUpdateUI(featureHeaderUserId, toggleMuteChat)
+          }
+        >
+          {isMuted ? (
+            <VolumeUpIcon sx={{ color: 'white' }} /* style props */ />
+          ) : (
+            <VolumeOffIcon sx={{ color: 'white' }} /* style props */ />
+          )}
+        </IconButton>
+        <IconButton
+          onClick={() =>
+            performActionAndUpdateUI(featureHeaderUserId, deleteUserChat)
+          }
+        >
+          <DeleteIcon style={{ color: 'white' }} />
+        </IconButton>
       </div>
     );
   };
 
-  useEffect(() => {
-    const hideActionBar = () => setShowActionBar(false);
-    document.addEventListener('click', hideActionBar);
-    return () => document.removeEventListener('click', hideActionBar);
-  }, []);
+  // Make sure to have correct relative path to your image
+  const backgroundImageUrl = back.src; // Adjust this if needed
+  // Format the current date as a string
+  const currentDate = new Date().toLocaleDateString('en-US', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  });
+
+  // Chat list rendering based on search results
+  // Adjusted renderChatList to reflect pin and mute status
+  // Adjusted renderChatList to reflect pin and mute status correctly
+  const renderChatList = () => {
+    console.log('Displaying Chats:', displayedUsers);
+    console.log('Chat States:', chatStates);
+
+    if (displayedUsers.length === 0) {
+      return <div>No users found</div>;
+    }
+
+    return displayedUsers.map((userDetail) => {
+      const userChatState = chatStates.get(userDetail.id);
+      const isPinned = userChatState?.isPinned;
+      const isMuted = userChatState?.isMuted;
+      console.log(
+        `User: ${userDetail.id}, Pinned: ${isPinned}, Muted: ${isMuted}`
+      );
+
+      return (
+        <div
+          key={userDetail.id}
+          className={`flex cursor-pointer items-center justify-between px-2 py-3 ${
+            selectedChatId === userDetail.id
+              ? 'bg-rgba(18, 18, 18, 0.123)'
+              : 'bg-rgba(18, 18, 18, 0.123)'
+          } border-b border-gray-700`}
+          onClick={() => handleUserSelect(userDetail.id)}
+        >
+          <div className='flex items-center space-x-3'>
+            {isPinned && <PushPinIcon />}
+            {isMuted && <VolumeOffIcon />}
+            <img
+              src={
+                userDetail?.photoURL ||
+                'https://img.icons8.com/?size=50&id=11730&format=png'
+              }
+              className='non-selectable h-12 w-12 rounded-full object-cover'
+              alt='User Avatar'
+            />
+            <div
+              className='text-#333 text-left font-semibold'
+              style={{ color: '#eee' }}
+            >
+              {userDetail?.name}
+            </div>
+          </div>
+          <IconButton
+            onClick={(e) => {
+              e.stopPropagation();
+              handleMoreVertClick(userDetail.id);
+            }}
+          >
+            <MoreVertOutlinedIcon style={{ color: '#FFF' }} />
+          </IconButton>
+        </div>
+      );
+    });
+  };
 
   return (
-    <>
+    <div style={{ overflowY: 'hidden', backgroundColor: '#121212' }}>
       <SEO title='Chat / Degen Diaries' />
       <ToastContainer position='bottom-center' autoClose={5000} />
-
-      <MainHeader
-        useMobileSidebar
-        title={
-          <>
-            {showChatBox ? (
-              <button
-                onClick={handleBackToUsers}
-                className='text-blue-500 hover:underline'
+      {renderFeatureHeader()}
+      {renderMainHeader()}
+      {isSearchActive && renderSearchBar()}
+      {/* // Conditional rendering to show options menu */}
+      <div
+        className='chat-container'
+        style={{ backgroundColor: '#121212', color: '#fff' }}
+      >
+        <div className='bg-#000 flex h-screen flex-col overflow-y-auto text-gray-100 md:flex-row'>
+          {/* Mobile header with back button and chat user info */}
+          {showChatBox && chatUser && (
+            <>
+              <div
+                style={{
+                  position: 'sticky',
+                  top: 0,
+                  zIndex: 15,
+                  backgroundColor: '#080F23', // WhatsApp green color
+                  padding: '10px 5px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  boxShadow: '0 1px 2px rgba(0, 0, 0, 0.2)'
+                }}
               >
-                <BackArrowIcon />
-              </button>
-            ) : (
-              <>
-                {/* Go to the{' '} */}
-                <Link href='/home'>
-                  <a className='text-blue-500 hover:underline'>←</a>
-                </Link>
-              </>
-            )}
-          </>
-        }
-        className='flex items-center justify-between border-b border-gray-700 bg-gray-800 p-4'
-      />
-
-      <div className='flex h-screen flex-col bg-gray-900 text-gray-100 md:flex-row'>
-        {/* Mobile header with back button and chat user info */}
-        {showChatBox && chatUser && (
-          <div className='sticky top-0 z-10 flex w-full items-center justify-between bg-gray-900 p-4 shadow-md md:hidden'>
-            <button
-              onClick={handleBackToUsers}
-              className='rounded-full p-2 text-blue-500 hover:bg-gray-700'
-            >
-              {/* SVG for Back Icon */}
-              <svg
-                xmlns='http://www.w3.org/2000/svg'
-                className='h-6 w-6'
-                fill='none'
-                viewBox='0 0 24 24'
-                stroke='currentColor'
-              >
-                <path
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  strokeWidth={2}
-                  d='M15 19l-7-7 7-7'
-                />
-              </svg>
-            </button>
-            <div className='flex items-center'>
-              <img
-                src={chatUser.photoURL || '/default-avatar.png'}
-                className='h-10 w-10 rounded-full object-cover'
-                alt={`${chatUser.name}'s avatar`}
-              />
-              <span className='ml-3 font-semibold'>{chatUser.name}</span>
-            </div>
-            <div className='w-10' /> {/* Spacer div for centering the title */}
-          </div>
-        )}
-        {showActionBar && isMobileDevice() && (
-          <TopActionBar
-            onPin={() => handlePinChat(selectedChatId)}
-            onMute={() => handleMuteChat(selectedChatId)}
-            onDelete={() => handleDeleteChat(selectedChatId)}
-          />
-        )}
-
-        {/* Chat List */}
-        {!showChatBox && (
-          <div className='flex h-full w-full flex-col overflow-y-auto border-r border-gray-700 p-4 md:w-1/4'>
-            {users.map((userDetail, index) => {
-              const chatState = chatStates.get(userDetail.id) || {};
-              if (chatState.isDeleted) return null; // Skip rendering deleted chats
-              const handleMouseDown = () =>
-                longPressHandlers.start(userDetail.id);
-              const handleMouseUp = (e) =>
-                longPressHandlers.stop(e, userDetail.id);
-              let chatItemClass = `flex cursor-pointer items-center space-x-3 px-2 py-3 border-b border-gray-700`;
-              chatItemClass +=
-                selectedChatId === userDetail.id
-                  ? ' bg-rgba(27, 40, 53, 0.651) text-white'
-                  : ' bg-gray-700 text-gray-300';
-
-              return (
-                <div
-                  key={userDetail.id}
-                  className={`flex cursor-pointer items-center space-x-3 px-2 py-3 ${
-                    selectedChatId === userDetail.id
-                      ? 'bg-rgba(27, 40, 53, 0.651)'
-                      : 'bg-gray-700'
-                  } border-b border-gray-700`}
-                  onClick={() => handleUserSelect(userDetail.id)}
-                  onContextMenu={(e) => showContextMenu(e, userDetail.id)}
-                  // {...longPressEvent(userDetail.id)} // Apply long press event handlers here
-                  onMouseDown={handleMouseDown}
-                  onMouseUp={handleMouseUp}
-                  {...(isMobileDevice() && {
-                    onMouseDown: () => longPressHandlers.start(userDetail.id),
-                    onMouseUp: (e) => longPressHandlers.stop(e, userDetail.id),
-                    onTouchStart: () => longPressHandlers.start(userDetail.id),
-                    onTouchEnd: (e) => longPressHandlers.stop(e, userDetail.id)
-                  })}
-                >
-                  <img
-                    src={
-                      userDetail?.photoURL ||
-                      'https://img.icons8.com/?size=50&id=11730&format=png'
-                    }
-                    className='non-selectable h-12 w-12 rounded-full object-cover'
-                    alt='User Avatar'
-                  />
-
-                  <div className='non-selectable text-left font-semibold text-gray-300'>
-                    {userDetail?.name}
-                  </div>
-                  {/* Mute Icon */}
-                  {/* Pin Icon */}
-                  {userDetail.isPinned && (
-                    <span className='pin-icon non-selectable'>📌</span>
-                  )}
-                  {userDetail.isMuted && (
-                    <span className='mute-icon non-selectable'>🔇</span>
-                  )}
-                  {/* {userDetail.isMuted && <span className='mute-icon'>🔇</span>} */}
-                  {!isMobileDevice() && (
-                    <ChatContextMenu
-                      x={contextMenu.x}
-                      y={contextMenu.y}
-                      visible={contextMenu.visible}
-                      onPin={() => handlePinChat(contextMenu.chatId)}
-                      onMute={() => handleMuteChat(contextMenu.chatId)}
-                      onDelete={() => handleDeleteChat(contextMenu.chatId)}
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <IconButton
+                    onClick={handleBackToUsers}
+                    style={{ marginRight: '-5px' }}
+                  >
+                    <ArrowBackIcon
+                      style={{ color: '#FFF', marginRight: '0px' }}
                     />
-                  )}
-
-                  {/* <div className='chat-actions'>
-                  <button
-                    onClick={() => togglePinChat(userDetail.id)}
-                    title='Pin/Unpin Chat'
-                  >
-                    📌
-                  </button>
-                  <button
-                    onClick={() => toggleMuteChat(userDetail.id)}
-                    title='Mute/Unmute Chat'
-                  >
-                    🔇
-                  </button>
-                  <button
-                    onClick={() => deleteChat(userDetail.id)}
-                    title='Delete Chat'
-                  >
-                    🗑️
-                  </button>
-                </div> */}
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Messages */}
-        {showChatBox && (
-          <div className='flex h-full w-full flex-col justify-between px-5 md:h-auto'>
-            <div className='mt-5 flex-grow overflow-y-auto pb-16'>
-              <div className='mb-4 text-center text-xl font-bold'>
-                {chatUser?.name}{' '}
-                {/* Displaying the name of the user you're chatting with */}
-              </div>
-              {messages.map((msg, index) => (
-                <div
-                  key={index}
-                  className={`flex ${
-                    msg.sender === user?.id ? 'justify-end' : 'justify-start'
-                  } mb-4`}
-                >
-                  <div
-                    className={`mr-2 rounded-xl px-4 py-3 ${
-                      msg.sender === user?.id
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-700 text-gray-300'
-                    }`}
-                  >
-                    {msg.text}
+                  </IconButton>
+                  <Avatar
+                    src={chatUser?.photoURL || '/default-avatar.png'}
+                    alt={`${chatUser?.name}'s avatar`}
+                    style={{ marginRight: '5px' }}
+                  />
+                  <div>
+                    <span style={{ color: '#FFF', fontWeight: 'bold' }}>
+                      {chatUser?.name}
+                    </span>
+                    <div
+                      style={{
+                        color: 'rgba(255, 255, 255, 0.6)',
+                        fontSize: 'small'
+                      }}
+                    >
+                      Online
+                    </div>
                   </div>
-                  <img
-                    src={
-                      msg.sender === user?.id
-                        ? user?.photoURL
-                        : chatUser?.photoURL ||
-                          'https://source.unsplash.com/random/600x600'
-                    }
-                    className='h-8 w-8 rounded-full object-cover'
-                    alt=''
-                  />
                 </div>
-              ))}
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <IconButton style={{ marginRight: '5px' }}>
+                    <PhoneIcon style={{ color: '#FFF' }} />
+                  </IconButton>
+                  {/* <IconButton style={{ marginRight: '5px' }}>
+                      <VideoCamIcon style={{ color: '#FFF' }} />
+                    </IconButton> */}
+                  <IconButton>
+                    <MoreVertOutlinedIcon style={{ color: '#FFF' }} />
+                  </IconButton>
+                </div>
+              </div>
+            </>
+          )}
+          {/* CHat List */}
+
+          {/* // Updated chat list to include MoreVertIcon */}
+          {!showChatBox && (
+            <div className='flex h-full w-full flex-col overflow-y-auto border-r border-gray-700 p-4 md:w-1/4'>
+              {renderChatList()}
             </div>
-            {/* Message input */}
-            <div className='flex w-full items-center border-t border-gray-700 p-4'>
-              <input
-                className='w-full rounded-full bg-gray-700 p-2 text-sm text-white placeholder-gray-400 focus:outline-none'
-                type='text'
-                placeholder='Type your message here...'
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                onKeyDown={handleKeyDown}
-              />
-              <button
-                onClick={handleSendMessage}
-                className='ml-4 rounded-full bg-blue-500 p-2 text-white hover:bg-blue-600 focus:outline-none'
+          )}
+
+          {/* Messages */}
+          {showChatBox && (
+            <div
+              className=' chat-messages flex h-full w-full flex-col justify-between px-5 md:h-auto'
+              style={{
+                flex: 1, // This will make the container fill the height
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                backgroundImage: `url(${backgroundImageUrl})`, // Make sure this path is correct
+                backgroundSize: 'cover',
+                backgroundRepeat: 'no-repeat',
+                backgroundAttachment: 'fixed',
+                position: 'relative'
+              }}
+            >
+              {/* Dark overlay with reduced opacity */}
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  right: 0,
+                  bottom: 0,
+                  left: 0,
+                  backgroundColor: 'rgba(0, 0, 0, 0.808)', // Darken the background
+                  zIndex: 1
+                }}
+              ></div>
+
+              {/* // Adjust marginTop to match your header height */}
+              <div
+                className='messages-list mt-25 flex-grow overflow-y-auto pb-16'
+                style={{
+                  flex: 1,
+                  overflowY: 'auto', // Allow vertical scrolling
+                  padding: '20px 0px 70px', // Add padding to the bottom to prevent the last message from being cut off
+                  position: 'relative', // Use relative for z-index context
+                  zIndex: 3, // Ensure it's above the overlay but below the input
+                  // Make sure the container has space to display the messages above the input box
+                  marginBottom: '80px' // Adjust this value based on the height of your input box
+                }}
               >
-                {/* SVG for Send Icon */}
-                <svg
-                  xmlns='http://www.w3.org/2000/svg'
-                  className='h-6 w-6'
-                  fill='none'
-                  viewBox='0 0 24 24'
-                  stroke='currentColor'
+                {/* Displaying the name of the user you're chatting with */}
+                {/* <div className='-mb-2 text-center text-xl font-bold'>
+                    {chatUser?.name}{' '}
+                  </div> */}
+                <div
+                  className='date-label'
+                  style={{ textAlign: 'center', color: 'white' }}
                 >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    strokeWidth={2}
-                    d='M4 4l16 8m0 0l-16 8m16-8H4'
-                  />
-                </svg>
-              </button>
+                  {currentDate}
+                </div>
+                {messages.map((msg, index) => (
+                  <div
+                    key={index}
+                    className={`flex ${
+                      msg.sender === user?.id ? 'justify-end' : 'justify-start'
+                    } mb-4`}
+                  >
+                    <div
+                      className={`rounded-xl px-4 py-3 ${
+                        msg.sender === user?.id
+                          ? 'bg-[#080F23] text-[#DFE4EA]'
+                          : 'bg-[#DFE4EA] text-[#080F23]'
+                      } text-weight-bold`}
+                    >
+                      {msg.text}
+                    </div>
+                    <img
+                      src={
+                        msg.sender === user?.id
+                          ? user?.photoURL
+                          : chatUser?.photoURL ||
+                            'https://source.unsplash.com/random/600x600'
+                      }
+                      className='h-8 w-8 rounded-full object-cover'
+                      alt=''
+                    />
+                  </div>
+                ))}
+              </div>
+              {/* Message input */}
+
+              {/* // Inside the 'message-input' div */}
+              <div
+                className='message-input'
+                style={{
+                  position: 'fixed',
+                  bottom: '0',
+                  left: '0',
+                  right: '0',
+                  backgroundColor: 'rgba(18, 18, 18, 0.123)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '5px 5px', // Reduced padding
+                  // borderTop: '1px solid #ddd',
+                  zIndex: 10, // Ensure this is above the emoji picker's zIndex
+                  boxShadow: '0 1px 2px rgba(0, 0, 0, 0.2)',
+                  overflow: 'scroll'
+                }}
+              >
+                {/* <IconButton 
+                  // onClick={() => setShowEmojiPicker((val) => !val)}
+                  >
+                    <EmojiEmotionsIcon style={{ color: '#eee',fontSize:'1.6rem' }} />
+                  </IconButton> */}
+                {/* <IconButton>
+                    <AttachFileIcon style={{ color: '#075E54' }} />
+                  </IconButton> */}
+                <TextField
+                  className='w-full rounded-full p-2 text-sm focus:outline-none'
+                  fullWidth
+                  type='text'
+                  placeholder='Type a message'
+                  value={message}
+                  onChange={handleChange}
+                  onKeyDown={handleKeyDown}
+                  margin='normal'
+                  sx={{
+                    flexGrow: 1,
+                    borderRadius: '50px !important',
+                    backgroundColor: '#DFE4EA',
+                    color: '#000',
+                    '& .MuiInputBase-input': {
+                      color: '#000'
+                    },
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      border: 'none'
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      border: 'none'
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      border: 'none'
+                    }
+                  }}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position='start'>
+                        <IconButton
+                          // onClick={() => setShowEmojiPicker((val) => !val)}
+                          sx={{ color: '#080F23' }}
+                        >
+                          <EmojiEmotionsIcon />
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                    endAdornment: (
+                      <InputAdornment position='end'>
+                        <IconButton
+                          onClick={handleSendMessage}
+                          sx={{ color: '#080F23 ' }}
+                        >
+                          <SendIcon />
+                        </IconButton>
+                      </InputAdornment>
+                    )
+                  }}
+                />
+
+                {/* <IconButton>
+                    <MicIcon style={{ color: '#075E54' }} />
+                  </IconButton> */}
+              </div>
             </div>
+          )}
+          <div className='chat-container'>
+            {/* Conditional rendering for chat list or message view */}
+            {!showChatBox ? (
+              // Bottom bar for chat list view
+              <BottomBar />
+            ) : (
+              <></>
+            )}
           </div>
-        )}
+        </div>
       </div>
-    </>
+    </div>
   );
 }
 
@@ -1112,7 +1488,7 @@ Chat.getLayout = (page: ReactElement): ReactNode => (
   <>
     <ProtectedLayout>
       <MainLayout>
-        <ChatLayout>{page}</ChatLayout>
+        <HomeLayout>{page}</HomeLayout>
       </MainLayout>
     </ProtectedLayout>
   </>

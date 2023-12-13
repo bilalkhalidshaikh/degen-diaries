@@ -1,5 +1,5 @@
 const admin = require('firebase-admin');
-const serviceAccount = require('./twitter-web3-firebase-adminsdk-j35np-dc879cc50b.json'); // Update this path
+const serviceAccount = require('./twitter-web3-firebase-adminsdk-j35np-dc879cc50b');
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
@@ -7,23 +7,39 @@ admin.initializeApp({
 
 const db = admin.firestore();
 
-async function addNewFieldsToAllDocuments() {
-  const collectionRef = db.collection('users'); // or 'chats'
-  const snapshot = await collectionRef.get();
+async function initializeUserChatsSubCollection() {
+  const usersRef = db.collection('users');
+  const usersSnapshot = await usersRef.get();
 
-  const updates = snapshot.docs.map((docSnapshot) => {
-    const docRef = db.collection('users').doc(docSnapshot.id); // or 'chats'
-    return docRef.update({
-      isPinned: false,
-      isMuted: false,
-      isDeleted: false
-    });
-  });
+  for (const userDoc of usersSnapshot.docs) {
+    const userId = userDoc.id;
+    const userChatsRef = usersRef.doc(userId).collection('userChats');
 
-  await Promise.all(updates);
-  console.log('All documents updated successfully');
+    // Fetch all chats that include the user
+    const chatsSnapshot = await db
+      .collection('chats')
+      .where('userIds', 'array-contains', userId)
+      .get();
+
+    for (const chatDoc of chatsSnapshot.docs) {
+      const chatId = chatDoc.id;
+      const userChatRef = userChatsRef.doc(chatId);
+
+      // Initialize or update the chat document in the user's sub-collection
+      await userChatRef.set(
+        {
+          isPinned: false,
+          isMuted: false,
+          isDeleted: false
+        },
+        { merge: true }
+      );
+    }
+  }
+
+  console.log('All userChats sub-collections initialized successfully');
 }
 
-addNewFieldsToAllDocuments().catch((error) =>
-  console.error('Error updating documents:', error)
-);
+initializeUserChatsSubCollection().catch((error) => {
+  console.error('Error initializing userChats sub-collections:', error);
+});

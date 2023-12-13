@@ -82,7 +82,7 @@ export function Tweet(tweet: TweetProps): JSX.Element {
         ...variants.animate,
         ...(parentTweet && { transition: { duration: 0.2 } })
       }}
-      className='mb-4 rounded-lg bg-opacity-40 p-4 shadow-md backdrop-blur-md dark:bg-[#15295f5d]' // Added glassmorphism styles
+      className='opacity-8 border-radius-10 mb-4 rounded-lg border-none bg-opacity-40 p-4 shadow-md backdrop-blur-md dark:bg-[#2a51be0e]' // Added glassmorphism styles
     >
       <Modal
         className='flex items-start justify-center'
@@ -96,10 +96,10 @@ export function Tweet(tweet: TweetProps): JSX.Element {
         <a
           className={cn(
             `accent-tab hover-card relative flex flex-col 
-         gap-y-4 outline-none duration-200`, // Removed padding and background color from here
-            parentTweet
-              ? 'mt-0.5 pb-0 pt-2.5'
-              : 'border-b border-light-border dark:border-dark-border'
+         gap-y-4 outline-none duration-200` // Removed padding and background color from here
+            // parentTweet
+            //   ? 'mt-0.5 pb-0 pt-2.5'
+            //   : 'border-b border-light-border dark:border-dark-border'
           )}
           onClick={delayScroll(200)}
         >

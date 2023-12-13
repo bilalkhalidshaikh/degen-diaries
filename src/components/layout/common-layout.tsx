@@ -33,10 +33,10 @@ export function ChatLayout({ children }: LayoutProps): JSX.Element {
   return (
     <>
       {children}
-      {/* <Aside> */}
-      {/* Add components that you want to display in the aside section for chat layout */}
-      {/* <Suggestions />  */}
-      {/* </Aside> */}
+      <Aside>
+        {/* Add components that you want to display in the aside section for chat layout */}
+        <Suggestions />
+      </Aside>
     </>
   );
 }

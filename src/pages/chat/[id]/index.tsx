@@ -1,13 +1,10 @@
 import React from 'react';
 import { useRouter } from 'next/router';
 import Chat from '../../../pages/chat'; // Adjust the path to point to your Chat component
+import { Loading } from '@components/ui/loading';
 
 function LoadingComponent() {
-  return (
-    <div className='flex min-h-screen items-center justify-center'>
-      Wait until Loading...
-    </div>
-  );
+  return <Loading className='mt-5 w-full' />;
 }
 
 function ChatPage() {
