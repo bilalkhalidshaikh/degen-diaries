@@ -133,13 +133,13 @@ export function Web3AuthContextProvider({
         const response = await fetch(url);
         if (!response.ok) {
           // If the response is not ok, return a default avatar URL
-          return 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSUTLhfdkuzPiOnl9wfnneG9l-bOM-YR53JCQ&usqp=CAU';
+          return 'https://ouch-cdn2.icons8.com/bULOsqOmFnYYAgo1CEAb_TXY2qJQhaeHRSHDFVGJfAE/rs:fit:368:368/czM6Ly9pY29uczgu/b3VjaC1wcm9kLmFz/c2V0cy9zdmcvNDQx/L2JjY2JhYTE2LWE1/N2UtNDE1Mi1hMGZl/LWYxZmMyNjQyMzkz/ZC5zdmc.png';
         }
         return url;
       } catch (error) {
         console.error('Error fetching avatar:', error);
         // In case of an error, return a default avatar URL
-        return 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSUTLhfdkuzPiOnl9wfnneG9l-bOM-YR53JCQ&usqp=CAU';
+        return 'https://ouch-cdn2.icons8.com/bULOsqOmFnYYAgo1CEAb_TXY2qJQhaeHRSHDFVGJfAE/rs:fit:368:368/czM6Ly9pY29uczgu/b3VjaC1wcm9kLmFz/c2V0cy9zdmcvNDQx/L2JjY2JhYTE2LWE1/N2UtNDE1Mi1hMGZl/LWYxZmMyNjQyMzkz/ZC5zdmc.png';
       }
     }
 
