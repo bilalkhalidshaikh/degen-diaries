@@ -28,11 +28,11 @@ const nextConfig = {
   swcMinify: false, // Disable minification as recommended by Web3Modal
   images: {
     domains: [
+      'ouch-cdn2.icons8.com',
       'source.boringavatars.com',
       'encrypted-tbn0.gstatic.com',
       'lh3.googleusercontent.com',
-      'firebasestorage.googleapis.com',
-      'ouch-cdn2.icons8.com'
+      'firebasestorage.googleapis.com'
     ]
   },
   eslint: {
