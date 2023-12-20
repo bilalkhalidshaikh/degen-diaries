@@ -360,7 +360,7 @@ export default function Notifications(): JSX.Element {
             {notifications.map((notification) => (
               <div
                 key={notification.id}
-                className='flex items-start space-x-4 rounded-lg bg-gray-700 p-4 shadow-lg'
+                className='flex items-start space-x-4 rounded-lg bg-[#02040A] p-4 shadow-lg'
               >
                 <img
                   src={notification.senderPhotoURL}

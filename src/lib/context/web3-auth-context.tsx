@@ -91,6 +91,18 @@ export function Web3AuthContextProvider({
   const [error, setError] = useState<Error | null>(null);
   const [loading, setLoading] = useState(true);
   const [authUser, setAuthUser] = useState<AuthUser | null>(null);
+  const initializeUserChatsForNewUser = async (userId) => {
+    const userChatsRef = db
+      .collection('users')
+      .doc(userId)
+      .collection('userChats');
+    // Here you can set initial values or leave the collection empty
+    // For example, setting a default chat (optional)
+    await userChatsRef
+      .doc('defaultChatId')
+      .set({ isPinned: false, isMuted: false, isDeleted: false });
+    console.log(`User chats initialized for user: ${userId}`);
+  };
 
   const manageUser = async (
     userId: string,
@@ -147,13 +159,25 @@ export function Web3AuthContextProvider({
       console.log('User does not exist, creating...');
 
       const validPhotoURL = getValidUrl(address);
+      // Function to shorten the wallet address
+      const shortenAddress = (addressId) => {
+        if (!addressId || addressId.length < 10) return addressId;
+        return `${addressId.substring(0, 5)}...${addressId.substring(
+          addressId.length - 4
+        )}`;
+      };
+      // Inside manageUser function
+      const shortenedAddress = shortenAddress(userRefId);
 
       const userData: WithFieldValue<User> = {
         id: userId,
         bio: null,
-        name: isWeb3 ? 'Web3 User' : authUser?.displayName || 'Google User',
+        name: isWeb3
+          ? shortenedAddress
+          : authUser?.displayName || 'Google User',
         photoURL: isWeb3 ? await getValidUrl(userId) : authUser?.photoURL || '',
-        username: isWeb3 ? userId : authUser?.email || '',
+        // username: isWeb3 ? userId : authUser?.email || '',
+        username: isWeb3 ? shortenedAddress : authUser?.email || '',
         theme: null,
         accent: null,
         website: null,
@@ -206,6 +230,9 @@ export function Web3AuthContextProvider({
         ]);
 
         const newUser = (await getDoc(doc(usersCollection, address))).data();
+        // Initialize userChats sub-collection for the new user
+        await initializeUserChatsForNewUser(userId);
+
         setUser(newUser as User);
         console.log('User created successfully');
       } catch (error) {

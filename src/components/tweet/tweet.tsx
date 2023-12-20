@@ -82,7 +82,7 @@ export function Tweet(tweet: TweetProps): JSX.Element {
         ...variants.animate,
         ...(parentTweet && { transition: { duration: 0.2 } })
       }}
-      className='opacity-8 border-radius-10 mb-4 rounded-lg border-none bg-opacity-40 p-4 shadow-md backdrop-blur-md dark:bg-[#2a51be0e]' // Added glassmorphism styles
+      className='opacity-8 z-1 border-radius-10 mb-4 rounded-lg border-none bg-opacity-40 p-4 shadow-md backdrop-blur-md dark:bg-[#2a51be0e]' // Added glassmorphism styles
     >
       <Modal
         className='flex items-start justify-center'

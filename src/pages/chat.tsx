@@ -87,20 +87,18 @@ type User = {
 
 // Moved outside the component to avoid re-creation on every render
 // Utility function to get filtered and sorted chats
-const getFilteredAndSortedChats = (allChats, userChatsData) => {
-  return allChats
-    .filter((chat) => {
-      const chatState = userChatsData.get(chat.id);
-      return chatState ? !chatState.isDeleted : true;
-    })
-    .sort((a, b) => {
-      const aIsPinned = userChatsData.get(a.id)?.isPinned || false;
-      const bIsPinned = userChatsData.get(b.id)?.isPinned || false;
-      return bIsPinned - aIsPinned;
-    });
-};
-
 // Function to get user chat states
+// const fetchUserChatStates = async (userId) => {
+//   const userChatsRef = collection(db, 'users', userId, 'userChats');
+//   const userChatSnapshot = await getDocs(userChatsRef);
+//   const chatStates = new Map();
+//   userChatSnapshot.forEach((doc) => {
+//     chatStates.set(doc.id, doc.data());
+//   });
+//   console.log("Fetched Chat States:", chatStates); // Add this line
+
+//   return chatStates;
+// };
 const fetchUserChatStates = async (userId) => {
   const userChatsRef = collection(db, 'users', userId, 'userChats');
   const userChatSnapshot = await getDocs(userChatsRef);
@@ -118,6 +116,19 @@ const fetchUsers = async (currentUser) => {
   return userSnapshot.docs
     .map((doc) => ({ ...doc.data(), id: doc.id }))
     .filter((user) => user.id !== currentUser?.id);
+};
+
+const getFilteredAndSortedChats = (allChats, userChatsData) => {
+  return allChats
+    .filter((chat) => {
+      const chatState = userChatsData.get(chat.id);
+      return chatState ? !chatState.isDeleted : true;
+    })
+    .sort((a, b) => {
+      const aIsPinned = userChatsData.get(a.id)?.isPinned || false;
+      const bIsPinned = userChatsData.get(b.id)?.isPinned || false;
+      return bIsPinned - aIsPinned;
+    });
 };
 
 export default function Chat({ chatId }: { chatId: string }): JSX.Element {
@@ -164,16 +175,38 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
   }, [chatId, users]);
 
   // Fetch users and their chat states
+  // useEffect(() => {
+  //   if (user) {
+  //     Promise.all([fetchUsers(user), fetchUserChatStates(user.id)])
+  //       .then(([users, chatStates]) => {
+  //         setUsers(users);
+  //         setChatStates(chatStates);
+  //       })
+  //       .catch(console.error);
+  //   }
+  // }, [user]);
   useEffect(() => {
-    if (user) {
-      Promise.all([fetchUsers(user), fetchUserChatStates(user.id)])
-        .then(([users, chatStates]) => {
-          setUsers(users);
-          setChatStates(chatStates);
-        })
-        .catch(console.error);
-    }
-  }, [user]);
+    const fetchData = async () => {
+      if (user) {
+        try {
+          const fetchedChatStates = await fetchUserChatStates(user.id);
+          console.log('Fetched Chat States:', fetchedChatStates); // Debug log
+          setChatStates(fetchedChatStates);
+          const updatedDisplayedChats = getFilteredAndSortedChats(
+            users,
+            fetchedChatStates
+          );
+          console.log('Updated Displayed Chats:', updatedDisplayedChats); // Debug log
+          setDisplayedUsers(updatedDisplayedChats);
+        } catch (error) {
+          console.error('Error fetching data:', error);
+        }
+      }
+    };
+
+    fetchData();
+  }, [user, users]);
+  // Added 'users' dependency
 
   // useEffect(() => {
   //   const fetchUsers = async () => {
@@ -231,8 +264,6 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
   };
 
   useEffect(() => {
-    let isMounted = true;
-
     const fetchUsers = async () => {
       const userCol = collection(db, 'users');
       const userSnapshot = await getDocs(userCol);
@@ -243,6 +274,7 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
         }))
         .filter((u) => u.id !== user?.id);
     };
+    let isMounted = true;
 
     // Updated function to fetch user chat preferences
     // Define fetchUserChatPreferences outside of useEffect
@@ -264,22 +296,53 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
     };
   }, [user]);
 
+  // useEffect(() => {
+  //   let isMounted = true;
+
+  //   const fetchData = async () => {
+  //     const fetchedUsers = await fetchUsers(user);
+  //     const chatPrefs = await fetchUserChatPreferences();
+  //     if (isMounted) {
+  //       setUsers(fetchedUsers);
+  //       setAllUsers(fetchedUsers);
+  //       setChatStates(chatPrefs);
+  //     }
+  //   };
+
+  //   if (user) {
+  //     fetchData();
+  //   }
+
+  //   return () => {
+  //     isMounted = false;
+  //   };
+  // }, [user]);
+
   useEffect(() => {
     let isMounted = true;
 
     const fetchData = async () => {
-      const fetchedUsers = await fetchUsers(user);
-      const chatPrefs = await fetchUserChatPreferences();
-      if (isMounted) {
-        setUsers(fetchedUsers);
-        setAllUsers(fetchedUsers);
-        setChatStates(chatPrefs);
+      if (user) {
+        try {
+          const fetchedUsers = await fetchUsers(user);
+          const fetchedChatStates = await fetchUserChatStates(user.id);
+          if (isMounted) {
+            setUsers(fetchedUsers);
+            setChatStates(fetchedChatStates);
+            // Update displayed chats based on fetched states
+            const updatedDisplayedChats = getFilteredAndSortedChats(
+              fetchedUsers,
+              fetchedChatStates
+            );
+            setDisplayedUsers(updatedDisplayedChats);
+          }
+        } catch (error) {
+          console.error('Error fetching data:', error);
+        }
       }
     };
 
-    if (user) {
-      fetchData();
-    }
+    fetchData();
 
     return () => {
       isMounted = false;
@@ -556,13 +619,13 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
   //   user.name.toLowerCase().includes(searchTerm.toLowerCase())
   // );
 
-  const updateChatState = (userId, updates) => {
-    setChatStates((prevStates) => {
-      const updatedStates = new Map(prevStates);
-      updatedStates.set(userId, { ...updatedStates.get(userId), ...updates });
-      return updatedStates;
-    });
-  };
+  // const updateChatState = (userId, updates) => {
+  //   setChatStates((prevStates) => {
+  //     const updatedStates = new Map(prevStates);
+  //     updatedStates.set(userId, { ...updatedStates.get(userId), ...updates });
+  //     return updatedStates;
+  //   });
+  // };
 
   const fetchChatIdsForUser = async (userId) => {
     const userChatsRef = collection(db, 'users', userId, 'userChats');
@@ -599,34 +662,41 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
   };
 
   // Fetch chat states from Firestore
-  const fetchChatStates = async () => {
-    const userChatRef = collection(db, 'users', user?.id, 'userChats');
-    const userChatSnapshot = await getDocs(userChatRef);
-    return userChatSnapshot.docs.reduce((acc, doc) => {
-      acc[doc.id] = doc.data();
-      return acc;
-    }, {});
-  };
-  // Chat actions (pin, mute, delete)
-  const performChatAction = async (userId, action) => {
-    try {
-      // Perform action (e.g., togglePinChat)
-      await action(userId);
+  // const fetchChatStates = async () => {
+  //   const userChatRef = collection(db, 'users', user?.id, 'userChats');
+  //   const userChatSnapshot = await getDocs(userChatRef);
+  //   return userChatSnapshot.docs.reduce((acc, doc) => {
+  //     acc[doc.id] = doc.data();
+  //     return acc;
+  //   }, {});
+  // };
+  // // Chat actions (pin, mute, delete)
+  // const performChatAction = async (userId, action) => {
+  //   try {
+  //     // Perform action (e.g., togglePinChat)
+  //     await action(userId);
 
-      // Fetch and update chat states
-      const updatedChatStates = await fetchChatStates();
-      setChatStates(new Map(Object.entries(updatedChatStates)));
+  //     // Fetch and update chat states
+  //     const updatedChatStates = await fetchChatStates();
+  //     setChatStates(new Map(Object.entries(updatedChatStates)));
 
-      // Trigger UI update
-      const updatedDisplayedChats = getFilteredAndSortedChats(
-        allUsers,
-        chatStates
-      );
-      setDisplayedUsers(updatedDisplayedChats);
-    } catch (error) {
-      console.error('Error performing action:', error);
-    }
+  //     // Trigger UI update
+  //     const updatedDisplayedChats = getFilteredAndSortedChats(
+  //       allUsers,
+  //       chatStates
+  //     );
+  //     setDisplayedUsers(updatedDisplayedChats);
+  //   } catch (error) {
+  //     console.error('Error performing action:', error);
+  //   }
+  // };
+
+  const updateLocalChatState = (chatId, updates) => {
+    setChatStates((prev) =>
+      new Map(prev).set(chatId, { ...prev.get(chatId), ...updates })
+    );
   };
+
   // Function to toggle pin for a chat
   const togglePinChat = async (userId) => {
     try {
@@ -639,6 +709,7 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
           await updateDoc(userChatRef, { isPinned: !isPinned });
           updateChatStatesImmediate(userId, { isPinned: !isPinned });
           // Call updateDisplayedChats here
+
           updateDisplayedChats();
           toast.success(
             `Chat ${isPinned ? 'unpinned' : 'pinned'} successfully`
@@ -649,10 +720,13 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
 
       await Promise.all(promises);
       updateDisplayedChats(); // Add this line after updating chat states
+      console.log('Updated Chat States after Pinning:', chatStates); // Add this line
     } catch (error) {
       console.error('Error in toggling pin:', error);
     }
   };
+
+  // Example: Function to toggle pin for a chat
 
   // Function to toggle mute for a chat
   const toggleMuteChat = async (userId) => {
@@ -748,6 +822,17 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
     }
   };
 
+  // const updateChatStateAndRefreshUI = async (userId, updateFunction) => {
+  //   try {
+  //     await updateFunction(userId);
+  //     // Refetch chat states after update
+  //     const updatedChatStates = await fetchUserChatStates(user.id);
+  //     setChatStates(updatedChatStates); // Update the state with new chat states
+  //     setDisplayedUsers(getFilteredAndSortedChats(users, updatedChatStates));
+  //   } catch (error) {
+  //     console.error('Error updating chat state:', error);
+  //   }
+  // };
   // Adjusted useEffect to ensure chat list is always sorted
   // useEffect(() => {
   //   const updatedDisplayedChats = getFilteredAndSortedChats(allUsers, chatStates);
@@ -775,53 +860,53 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
 
   // This function will update the local state for a specific chat ID.
 
-  const handlePinChat = async (chatIdToPin) => {
-    if (!chatIdToPin) {
-      console.error('No chat ID provided for pinning.');
-      return;
-    }
+  // const handlePinChat = async (chatIdToPin) => {
+  //   if (!chatIdToPin) {
+  //     console.error('No chat ID provided for pinning.');
+  //     return;
+  //   }
 
-    if (!chatId) return;
-    const chatRef = doc(db, 'chats', chatId);
-    const chatDoc = await getDoc(chatRef);
-    const isPinned = chatDoc.data().isPinned || false;
-    await updateDoc(chatRef, { isPinned: !isPinned });
+  //   if (!chatId) return;
+  //   const chatRef = doc(db, 'chats', chatId);
+  //   const chatDoc = await getDoc(chatRef);
+  //   const isPinned = chatDoc.data().isPinned || false;
+  //   await updateDoc(chatRef, { isPinned: !isPinned });
 
-    // Update local state
-    setUsers((prevUsers) =>
-      prevUsers.map((user) =>
-        user.id === chatIdToPin ? { ...user, isPinned: !isPinned } : user
-      )
-    );
+  //   // Update local state
+  //   setUsers((prevUsers) =>
+  //     prevUsers.map((user) =>
+  //       user.id === chatIdToPin ? { ...user, isPinned: !isPinned } : user
+  //     )
+  //   );
 
-    toast.success(`Chat ${isPinned ? 'unpinned' : 'pinned'} successfully`);
-  };
+  //   toast.success(`Chat ${isPinned ? 'unpinned' : 'pinned'} successfully`);
+  // };
 
-  const handleMuteChat = async (chatIdToMute) => {
-    if (!chatIdToMute) {
-      console.error('No chat ID provided for muting.');
-      return;
-    }
+  // const handleMuteChat = async (chatIdToMute) => {
+  //   if (!chatIdToMute) {
+  //     console.error('No chat ID provided for muting.');
+  //     return;
+  //   }
 
-    const chatRef = doc(db, 'users', chatIdToMute);
-    const chatDoc = await getDoc(chatRef);
-    const isCurrentlyMuted = chatDoc.data()?.isMuted || false;
+  //   const chatRef = doc(db, 'users', chatIdToMute);
+  //   const chatDoc = await getDoc(chatRef);
+  //   const isCurrentlyMuted = chatDoc.data()?.isMuted || false;
 
-    await updateDoc(chatRef, { isMuted: !isCurrentlyMuted });
+  //   await updateDoc(chatRef, { isMuted: !isCurrentlyMuted });
 
-    // Update local state
-    setUsers((prevUsers) =>
-      prevUsers.map((user) =>
-        user.id === chatIdToMute
-          ? { ...user, isMuted: !isCurrentlyMuted }
-          : user
-      )
-    );
+  //   // Update local state
+  //   setUsers((prevUsers) =>
+  //     prevUsers.map((user) =>
+  //       user.id === chatIdToMute
+  //         ? { ...user, isMuted: !isCurrentlyMuted }
+  //         : user
+  //     )
+  //   );
 
-    toast.success(
-      `Chat ${isCurrentlyMuted ? 'unmuted' : 'muted'} successfully`
-    );
-  };
+  //   toast.success(
+  //     `Chat ${isCurrentlyMuted ? 'unmuted' : 'muted'} successfully`
+  //   );
+  // };
 
   // const handleDeleteChat = async (chatIdToDelete) => {
   //   if (!chatIdToDelete) {
@@ -1025,32 +1110,40 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
         'bg-main-background/60'
       )}
     >
-      <BottomNavigationAction
-        label='Home'
-        value='/home'
-        icon={<HomeOutlinedIcon sx={{ color: '#eee', fontSize: '2rem' }} />}
-      />
-      <BottomNavigationAction
-        label='Notifications'
-        value='/notifications'
-        icon={
-          <NotificationsNoneOutlinedIcon
-            sx={{ color: '#eee', fontSize: '2rem' }}
-          />
-        }
-      />
-      <BottomNavigationAction
-        label='Chat'
-        value='/chat'
-        icon={<MarkEmailUnreadIcon sx={{ color: '#fff', fontSize: '2rem' }} />}
-      />
-      <BottomNavigationAction
-        label='Profile'
-        value={`/user/${user?.username}`}
-        icon={
-          <PermIdentityOutlinedIcon sx={{ color: '#eee', fontSize: '2rem' }} />
-        }
-      />
+      <Link href='/home' passHref>
+        <BottomNavigationAction
+          label='Home'
+          icon={<HomeOutlinedIcon sx={{ color: '#eee', fontSize: '2rem' }} />}
+        />
+      </Link>
+      <Link href='/notifications' passHref>
+        <BottomNavigationAction
+          label='Notifications'
+          icon={
+            <NotificationsNoneOutlinedIcon
+              sx={{ color: '#eee', fontSize: '2rem' }}
+            />
+          }
+        />
+      </Link>
+      <Link href='/chat' passHref>
+        <BottomNavigationAction
+          label='Chat'
+          icon={
+            <MarkEmailUnreadIcon sx={{ color: '#fff', fontSize: '2rem' }} />
+          }
+        />
+      </Link>
+      <Link href={`/user/${user?.username}`} passHref>
+        <BottomNavigationAction
+          label='Profile'
+          icon={
+            <PermIdentityOutlinedIcon
+              sx={{ color: '#eee', fontSize: '2rem' }}
+            />
+          }
+        />
+      </Link>
     </BottomNavigation>
   );
 
@@ -1207,6 +1300,7 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
       const chatState = chatStates.get(user.id);
       return chatState ? !chatState.isDeleted : true;
     });
+    // console.log("Displayed Users:", displayedUsers); // Add this line
 
     if (displayedUsers.length === 0) {
       return (
@@ -1219,13 +1313,14 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
       );
     }
 
+    // Example snippet from renderChatList
     return displayedUsers.map((userDetail) => {
       const userChatState = chatStates.get(userDetail.id);
       const isPinned = userChatState?.isPinned;
       const isMuted = userChatState?.isMuted;
-      console.log(
-        `User: ${userDetail.id}, Pinned: ${isPinned}, Muted: ${isMuted} and :${userChatState} `
-      );
+      // console.log(
+      //   `User: ${userDetail.id}, Pinned: ${isPinned}, Muted: ${isMuted} and :${userChatState} `
+      // );
 
       return (
         <div
