@@ -1572,6 +1572,12 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
 
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [displayedUsers, setDisplayedUsers] = useState<User[]>([]);
+  // State to control the visibility of user list
+  const [showUserList, setShowUserList] = useState(false);
+
+  const handleStartChatClick = () => {
+    setShowUserList(true);
+  };
 
   useEffect(() => {
     if (!chatId && users.length > 0) {
@@ -1802,6 +1808,7 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
       setChatUser({ ...otherUserDoc.data(), id: otherUserDoc.id });
       setShowChatBox(true);
       router.push(`/chat/${chatDocRef.id}`);
+      setShowUserList(false); // Hide the user list after starting the chat
     } catch (error) {
       console.error('Error handling user selection:', error);
     }
@@ -2221,6 +2228,7 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
     return () => document.removeEventListener('click', hideActionBar);
   }, []);
 
+  // !showUserList ? null : (
   const BottomBar = () => (
     <BottomNavigation
       showLabels
@@ -2272,6 +2280,7 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
         />
       </Link>
     </BottomNavigation>
+    //  )
   );
   const renderFeatureHeader = () => {
     if (featureHeaderUserId === null) return null;
@@ -2282,7 +2291,7 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
       e.stopPropagation();
     };
 
-    return (
+    return !showUserList ? null : (
       <div
         className='feature-header'
         style={{
@@ -2345,43 +2354,44 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
     user.name.toLowerCase().includes(searchTerm)
   );
 
-  const renderSearchBar = () => (
-    <div
-      style={{
-        position: 'sticky',
-        top: '50px',
-        zIndex: 10,
-        backgroundColor: '#121212',
-        padding: '10px',
-        width: '100%'
-      }}
-    >
-      <TextField
-        autoFocus
-        fullWidth
-        size='small'
-        variant='outlined'
-        placeholder='Search users...'
-        value={searchTerm}
-        onChange={(e) => handleSearchChange(e.target.value)}
-        InputProps={{
-          endAdornment: (
-            <InputAdornment position='end'>
-              <IconButton onClick={() => setIsSearchActive(false)}>
-                <CloseIcon />
-              </IconButton>
-            </InputAdornment>
-          )
-        }}
+  const renderSearchBar = () =>
+    !showUserList ? null : (
+      <div
         style={{
-          backgroundColor: 'white',
-          borderRadius: '20px',
-          outline: 'none !important',
-          border: 'none'
-        }} // Add custom styles for search bar
-      />
-    </div>
-  );
+          position: 'sticky',
+          top: '50px',
+          zIndex: 10,
+          backgroundColor: '#121212',
+          padding: '10px',
+          width: '100%'
+        }}
+      >
+        <TextField
+          autoFocus
+          fullWidth
+          size='small'
+          variant='outlined'
+          placeholder='Search users...'
+          value={searchTerm}
+          onChange={(e) => handleSearchChange(e.target.value)}
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position='end'>
+                <IconButton onClick={() => setIsSearchActive(false)}>
+                  <CloseIcon />
+                </IconButton>
+              </InputAdornment>
+            )
+          }}
+          style={{
+            backgroundColor: 'white',
+            borderRadius: '20px',
+            outline: 'none !important',
+            border: 'none'
+          }} // Add custom styles for search bar
+        />
+      </div>
+    );
 
   // Conditional rendering of MainHeader
   //   // Conditional re
@@ -2389,7 +2399,7 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
     if (featureHeaderUserId !== null) return null;
 
     if (!showChatBox) {
-      return (
+      return !showUserList ? null : (
         <MainHeader
           useMobileSidebar
           title={<> </>}
@@ -2404,7 +2414,7 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
                   marginLeft: '-1.2rem'
                 }}
               >
-                Messages
+                D-Chat
               </Typography>
             </Grid>
             <Grid item>
@@ -2420,6 +2430,8 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
   };
 
   const renderChatList = () => {
+    if (!showUserList) return null;
+
     // console.log('Displaying Chats:', displayedUsers);
     // console.log('Chat States:', chatStates);
 
@@ -2429,6 +2441,24 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
     //   const bIsPinned = chatStates.get(b.id)?.isPinned || false;
     //   return bIsPinned - aIsPinned;
     // });
+    // Only display the user list if there is a search term entered
+    if (searchTerm === '') {
+      return (
+        <div className='no-users-found'>
+          {/* <p>Start searching to chat with users</p> */}
+          <br />
+          <br />
+          <br />
+          <br />
+          <br />
+          <br />
+          <StatsEmpty
+            title={`Degen Chat`}
+            description='Start searching to chat with users'
+          />
+        </div>
+      );
+    }
     // Use sortedUsers instead of users
     const sortedUsers = sortUsers([...users]);
     // Filter out deleted chats
@@ -2467,7 +2497,7 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
           setFeatureHeaderUserId(userId);
         }
       };
-      return (
+      return !showUserList ? null : (
         <div
           key={userDetail.id}
           className={`flex cursor-pointer items-center justify-between px-2 py-3 pb-4 ${
@@ -2526,251 +2556,265 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
       {renderMainHeader()}
       {isSearchActive && renderSearchBar()}
       {/* // Conditional rendering to show options menu */}
-      <div
-        className='chat-container'
-        style={{ backgroundColor: '#121212', color: '#fff' }}
-      >
-        <div className='bg-#000 flex h-screen flex-col overflow-y-auto text-gray-100 md:flex-row'>
-          {/* Mobile header with back button and chat user info */}
-          {showChatBox && chatUser && (
-            <>
-              <div
-                style={{
-                  position: 'sticky',
-                  top: 0,
-                  zIndex: 15,
-                  backgroundColor: '#080F23', // WhatsApp green color
-                  padding: '10px 5px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  boxShadow: '0 1px 2px rgba(0, 0, 0, 0.2)'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center' }}>
-                  <IconButton
-                    onClick={handleBackToUsers}
-                    style={{ marginRight: '-5px' }}
-                  >
-                    <ArrowBackIcon
-                      style={{ color: '#FFF', marginRight: '0px' }}
-                    />
-                  </IconButton>
-                  <Avatar
-                    src={chatUser?.photoURL || '/default-avatar.png'}
-                    alt={`${chatUser?.name}'s avatar`}
-                    style={{ marginRight: '5px' }}
-                  />
-                  <div>
-                    <span style={{ color: '#FFF', fontWeight: 'bold' }}>
-                      {chatUser?.name}
-                    </span>
-                    <div
-                      style={{
-                        color: 'rgba(255, 255, 255, 0.6)',
-                        fontSize: 'small'
-                      }}
-                    >
-                      Online
-                    </div>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center' }}>
-                  <IconButton style={{ marginRight: '5px' }}>
-                    <PhoneIcon style={{ color: '#FFF' }} />
-                  </IconButton>
-                  {/* <IconButton style={{ marginRight: '5px' }}>
-                    <VideoCamIcon style={{ color: '#FFF' }} />
-                  </IconButton> */}
-                  <IconButton>
-                    <MoreVertOutlinedIcon style={{ color: '#FFF' }} />
-                  </IconButton>
-                </div>
-              </div>
-            </>
-          )}
-          {/* CHat List */}
-
-          {/* // Updated chat list to include MoreVertIcon */}
-          {!showChatBox && (
-            <div className='flex h-full w-full flex-col overflow-y-auto border-r border-gray-700 p-4 pb-8 md:w-1/4'>
-              {renderChatList()}
-            </div>
-          )}
-
-          {/* Messages */}
-          {showChatBox && (
-            <div
-              className=' chat-messages flex h-full w-full flex-col justify-between px-5 md:h-auto'
-              style={{
-                flex: 1, // This will make the container fill the height
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-                backgroundImage: `url(${backgroundImageUrl})`, // Make sure this path is correct
-                backgroundSize: 'cover',
-                backgroundRepeat: 'no-repeat',
-                backgroundAttachment: 'fixed',
-                position: 'relative'
-              }}
-            >
-              {/* Dark overlay with reduced opacity */}
-              <div
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  right: 0,
-                  bottom: 0,
-                  left: 0,
-                  backgroundColor: 'rgba(0, 0, 0, 0.925)', // Darken the background
-                  zIndex: 1
-                }}
-              ></div>
-
-              {/* // Adjust marginTop to match your header height */}
-              <div
-                className='messages-list mt-25 flex-grow overflow-y-auto pb-16'
-                style={{
-                  flex: 1,
-                  overflowY: 'auto', // Allow vertical scrolling
-                  padding: '20px 0px 70px', // Add padding to the bottom to prevent the last message from being cut off
-                  position: 'relative', // Use relative for z-index context
-                  zIndex: 3, // Ensure it's above the overlay but below the input
-                  // Make sure the container has space to display the messages above the input box
-                  marginBottom: '80px' // Adjust this value based on the height of your input box
-                }}
-              >
-                {/* Displaying the name of the user you're chatting with */}
-                {/* <div className='-mb-2 text-center text-xl font-bold'>
-                  {chatUser?.name}{' '}
-                </div> */}
+      {!showUserList && (
+        <div className='fixed left-0 top-0 z-10 flex h-screen w-full items-center justify-center'>
+          <button
+            className='rounded bg-[#F0F0F0] px-12 py-8 text-lg text-[#141B21] hover:bg-[#141B21] hover:text-[#F0F0F0] focus:outline-none'
+            onClick={handleStartChatClick}
+          >
+            Start Chat.
+          </button>
+        </div>
+      )}
+      {!showUserList ? null : (
+        <div
+          className={`chat-container ${!showUserList ? 'blur-sm' : ''}`}
+          style={{ backgroundColor: '#121212', color: '#fff' }}
+        >
+          <div className='bg-#000 flex h-screen flex-col overflow-y-auto text-gray-100 md:flex-row'>
+            {/* Mobile header with back button and chat user info */}
+            {showChatBox && chatUser && (
+              <>
                 <div
-                  className='date-label'
-                  style={{ textAlign: 'center', color: 'white' }}
+                  style={{
+                    position: 'sticky',
+                    top: 0,
+                    zIndex: 15,
+                    backgroundColor: '#080F23', // WhatsApp green color
+                    padding: '10px 5px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.2)'
+                  }}
                 >
-                  {currentDate}
-                </div>
-                {messages.map((msg, index) => (
-                  <div
-                    key={index}
-                    className={`flex ${
-                      msg.sender === user?.id ? 'justify-end' : 'justify-start'
-                    } mb-4`}
-                  >
-                    <div
-                      className={`rounded-xl px-4 py-3 ${
-                        msg.sender === user?.id
-                          ? 'bg-[#080F23] text-[#DFE4EA]'
-                          : 'bg-[#DFE4EA] text-[#080F23]'
-                      } text-weight-bold`}
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <IconButton
+                      onClick={handleBackToUsers}
+                      style={{ marginRight: '-5px' }}
                     >
-                      {msg.text}
-                    </div>
-                    <img
-                      src={
-                        msg.sender === user?.id
-                          ? user?.photoURL
-                          : chatUser?.photoURL ||
-                            'https://source.unsplash.com/random/600x600'
-                      }
-                      className='h-8 w-8 rounded-full object-cover'
-                      alt=''
+                      <ArrowBackIcon
+                        style={{ color: '#FFF', marginRight: '0px' }}
+                      />
+                    </IconButton>
+                    <Avatar
+                      src={chatUser?.photoURL || '/default-avatar.png'}
+                      alt={`${chatUser?.name}'s avatar`}
+                      style={{ marginRight: '5px' }}
                     />
+                    <div>
+                      <span style={{ color: '#FFF', fontWeight: 'bold' }}>
+                        {chatUser?.name}
+                      </span>
+                      <div
+                        style={{
+                          color: 'rgba(255, 255, 255, 0.6)',
+                          fontSize: 'small'
+                        }}
+                      >
+                        Online
+                      </div>
+                    </div>
                   </div>
-                ))}
-              </div>
-              {/* Message input */}
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <IconButton style={{ marginRight: '5px' }}>
+                      <PhoneIcon style={{ color: '#FFF' }} />
+                    </IconButton>
+                    {/* <IconButton style={{ marginRight: '5px' }}>
+                      <VideoCamIcon style={{ color: '#FFF' }} />
+                    </IconButton> */}
+                    <IconButton>
+                      <MoreVertOutlinedIcon style={{ color: '#FFF' }} />
+                    </IconButton>
+                  </div>
+                </div>
+              </>
+            )}
+            {/* CHat List */}
 
-              {/* // Inside the 'message-input' div */}
+            {/* // Updated chat list to include MoreVertIcon */}
+            {!showChatBox && (
+              <div className='flex h-full w-full flex-col overflow-y-auto border-r border-gray-700 p-4 pb-8 md:w-1/4'>
+                {renderChatList()}
+              </div>
+            )}
+
+            {/* Messages */}
+            {showChatBox && (
               <div
-                className='message-input'
+                className=' chat-messages flex h-full w-full flex-col justify-between px-5 md:h-auto'
                 style={{
-                  position: 'fixed',
-                  bottom: '0',
-                  left: '0',
-                  right: '0',
-                  backgroundColor: 'rgba(18, 18, 18, 0.123)',
+                  flex: 1, // This will make the container fill the height
                   display: 'flex',
-                  alignItems: 'center',
-                  padding: '5px 5px', // Reduced padding
-                  // borderTop: '1px solid #ddd',
-                  zIndex: 10, // Ensure this is above the emoji picker's zIndex
-                  boxShadow: '0 1px 2px rgba(0, 0, 0, 0.2)',
-                  overflow: 'scroll'
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  backgroundImage: `url(${backgroundImageUrl})`, // Make sure this path is correct
+                  backgroundSize: 'cover',
+                  backgroundRepeat: 'no-repeat',
+                  backgroundAttachment: 'fixed',
+                  position: 'relative'
                 }}
               >
-                {/* <IconButton 
-                // onClick={() => setShowEmojiPicker((val) => !val)}
-                >
-                  <EmojiEmotionsIcon style={{ color: '#eee',fontSize:'1.6rem' }} />
-                </IconButton> */}
-                {/* <IconButton>
-                  <AttachFileIcon style={{ color: '#075E54' }} />
-                </IconButton> */}
-                <TextField
-                  className='w-full rounded-full p-2 text-sm focus:outline-none'
-                  fullWidth
-                  type='text'
-                  placeholder='Type a message'
-                  value={message}
-                  onChange={handleChange}
-                  onKeyDown={handleKeyDown}
-                  margin='normal'
-                  sx={{
-                    flexGrow: 1,
-                    borderRadius: '50px !important',
-                    backgroundColor: '#DFE4EA',
-                    color: '#000',
-                    '& .MuiInputBase-input': {
-                      color: '#000'
-                    },
-                    '& .MuiOutlinedInput-notchedOutline': {
-                      border: 'none'
-                    },
-                    '&:hover .MuiOutlinedInput-notchedOutline': {
-                      border: 'none'
-                    },
-                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                      border: 'none'
-                    }
+                {/* Dark overlay with reduced opacity */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    right: 0,
+                    bottom: 0,
+                    left: 0,
+                    backgroundColor: 'rgba(0, 0, 0, 0.925)', // Darken the background
+                    zIndex: 1
                   }}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position='start'>
-                        <IconButton
-                          // onClick={() => setShowEmojiPicker((val) => !val)}
-                          sx={{ color: '#080F23' }}
-                        >
-                          <EmojiEmotionsIcon />
-                        </IconButton>
-                      </InputAdornment>
-                    ),
-                    endAdornment: (
-                      <InputAdornment position='end'>
-                        <IconButton
-                          onClick={handleSendMessage}
-                          sx={{ color: '#080F23 ' }}
-                        >
-                          <SendIcon />
-                        </IconButton>
-                      </InputAdornment>
-                    )
-                  }}
-                />
+                ></div>
 
-                {/* <IconButton>
-                  <MicIcon style={{ color: '#075E54' }} />
-                </IconButton> */}
+                {/* // Adjust marginTop to match your header height */}
+                <div
+                  className='messages-list mt-25 flex-grow overflow-y-auto pb-16'
+                  style={{
+                    flex: 1,
+                    overflowY: 'auto', // Allow vertical scrolling
+                    padding: '20px 0px 70px', // Add padding to the bottom to prevent the last message from being cut off
+                    position: 'relative', // Use relative for z-index context
+                    zIndex: 3, // Ensure it's above the overlay but below the input
+                    // Make sure the container has space to display the messages above the input box
+                    marginBottom: '80px' // Adjust this value based on the height of your input box
+                  }}
+                >
+                  {/* Displaying the name of the user you're chatting with */}
+                  {/* <div className='-mb-2 text-center text-xl font-bold'>
+                    {chatUser?.name}{' '}
+                  </div> */}
+                  <div
+                    className='date-label'
+                    style={{ textAlign: 'center', color: 'white' }}
+                  >
+                    {currentDate}
+                  </div>
+                  {messages.map((msg, index) => (
+                    <div
+                      key={index}
+                      className={`flex ${
+                        msg.sender === user?.id
+                          ? 'justify-end'
+                          : 'justify-start'
+                      } mb-4`}
+                    >
+                      <div
+                        className={`rounded-xl px-4 py-3 ${
+                          msg.sender === user?.id
+                            ? 'bg-[#080F23] text-[#DFE4EA]'
+                            : 'bg-[#DFE4EA] text-[#080F23]'
+                        } text-weight-bold`}
+                      >
+                        {msg.text}
+                      </div>
+                      <img
+                        src={
+                          msg.sender === user?.id
+                            ? user?.photoURL
+                            : chatUser?.photoURL ||
+                              'https://source.unsplash.com/random/600x600'
+                        }
+                        className='h-8 w-8 rounded-full object-cover'
+                        alt=''
+                      />
+                    </div>
+                  ))}
+                </div>
+                {/* Message input */}
+
+                {/* // Inside the 'message-input' div */}
+                <div
+                  className='message-input'
+                  style={{
+                    position: 'fixed',
+                    bottom: '0',
+                    left: '0',
+                    right: '0',
+                    backgroundColor: 'rgba(18, 18, 18, 0.123)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '5px 5px', // Reduced padding
+                    // borderTop: '1px solid #ddd',
+                    zIndex: 10, // Ensure this is above the emoji picker's zIndex
+                    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.2)',
+                    overflow: 'scroll'
+                  }}
+                >
+                  {/* <IconButton 
+                  // onClick={() => setShowEmojiPicker((val) => !val)}
+                  >
+                    <EmojiEmotionsIcon style={{ color: '#eee',fontSize:'1.6rem' }} />
+                  </IconButton> */}
+                  {/* <IconButton>
+                    <AttachFileIcon style={{ color: '#075E54' }} />
+                  </IconButton> */}
+                  <TextField
+                    className='w-full rounded-full p-2 text-sm focus:outline-none'
+                    fullWidth
+                    type='text'
+                    placeholder='Type a message'
+                    value={message}
+                    onChange={handleChange}
+                    onKeyDown={handleKeyDown}
+                    margin='normal'
+                    sx={{
+                      flexGrow: 1,
+                      borderRadius: '50px !important',
+                      backgroundColor: '#DFE4EA',
+                      color: '#000',
+                      '& .MuiInputBase-input': {
+                        color: '#000'
+                      },
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        border: 'none'
+                      },
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        border: 'none'
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        border: 'none'
+                      }
+                    }}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position='start'>
+                          <IconButton
+                            // onClick={() => setShowEmojiPicker((val) => !val)}
+                            sx={{ color: '#080F23' }}
+                          >
+                            <EmojiEmotionsIcon />
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                      endAdornment: (
+                        <InputAdornment position='end'>
+                          <IconButton
+                            onClick={handleSendMessage}
+                            sx={{ color: '#080F23 ' }}
+                          >
+                            <SendIcon />
+                          </IconButton>
+                        </InputAdornment>
+                      )
+                    }}
+                  />
+
+                  {/* <IconButton>
+                    <MicIcon style={{ color: '#075E54' }} />
+                  </IconButton> */}
+                </div>
               </div>
+            )}
+            <div className='chat-container'>
+              {/* Conditional rendering for chat list or message view */}
+              {/* // Bottom bar for chat list view */}
+              {!showChatBox ? <BottomBar /> : <></>}
             </div>
-          )}
-          <div className='chat-container'>
-            {/* Conditional rendering for chat list or message view */}
-            {/* // Bottom bar for chat list view */}
-            {!showChatBox ? <BottomBar /> : <></>}
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

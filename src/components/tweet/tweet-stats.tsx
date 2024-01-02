@@ -99,14 +99,14 @@ export function TweetStats({
     }
     // openModal(); // This function should set the state to open the modal
     handleOpenCoinsModal();
-    console.log('ERC-20 Balances:', erc20Balances);
-    console.log('ERC-721 Balances:', erc721Balances);
+    // console.log('ERC-20 Balances:', erc20Balances);
+    // console.log('ERC-721 Balances:', erc721Balances);
   };
 
   // const { user } = useUser();
   const { address } = useAccount();
   useEffect(() => {
-    console.log('here is the add ', address);
+    console.log('here is the address ', address);
   }, [address]);
   const { data: balanceData, isLoading } = useBalance({
     address: address
@@ -157,7 +157,7 @@ export function TweetStats({
       )}
       <div
         className={cn(
-          'flex text-light-secondary inner:outline-none dark:text-dark-secondary',
+          'flex pt-6   text-light-secondary inner:outline-none dark:text-dark-secondary',
           viewTweet ? 'justify-around py-2' : 'max-w-md justify-between'
         )}
       >
@@ -173,6 +173,7 @@ export function TweetStats({
           onClick={openModal}
           disabled={reply}
         />
+        &nbsp;
         <TweetOption
           className={cn(
             'hover:text-accent-green focus-visible:text-accent-green',
@@ -191,6 +192,7 @@ export function TweetStats({
             tweetId
           )}
         />
+        &nbsp;
         <TweetOption
           className={cn(
             'hover:text-accent-pink focus-visible:text-accent-pink',
@@ -210,6 +212,7 @@ export function TweetStats({
           )}
         />
         {/* Add the Coin TweetOption here */}
+        &nbsp; &nbsp;
         <TweetOption
           className='hover:text-accent-yellow focus-visible:text-accent-yellow'
           iconClassName='group-hover:bg-accent-yellow/10 group-active:bg-accent-yellow/20 
@@ -219,7 +222,7 @@ export function TweetStats({
           iconName='CurrencyDollarIcon' // Replace with your desired coin icon
           onClick={(event) => handleCoinClick(event)}
         />
-
+        &nbsp;
         {/* // Render the modal conditionally */}
         <Modal
           open={showCoinsModal}
@@ -261,8 +264,8 @@ export function TweetStats({
           </div>
         </Modal>
         {/* // Render the modal conditionally */}
-        <TweetShare userId={userId} tweetId={tweetId} viewTweet={viewTweet} />
-        {isOwner && (
+        {/* <TweetShare userId={userId} tweetId={tweetId} viewTweet={viewTweet} /> */}
+        {/* {isOwner && (
           <TweetOption
             className='hover:text-accent-blue focus-visible:text-accent-blue'
             iconClassName='group-hover:bg-accent-blue/10 group-active:bg-accent-blue/20 
@@ -271,7 +274,7 @@ export function TweetStats({
             iconName='ChartPieIcon'
             disabled
           />
-        )}
+        )} */}
       </div>
     </>
   );

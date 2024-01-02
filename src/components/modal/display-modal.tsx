@@ -51,9 +51,9 @@ export function DisplayModal({ closeModal }: DisplayModalProps): JSX.Element {
               </div>
             </div>
             <p className='whitespace-pre-line break-words'>
-              At the heart of Twitter are short messages called Tweets — just
-              like this one — which can include photos, videos, links, text,
-              hashtags, and mentions like{' '}
+              At the heart of Degen Diaries are short messages called Degens —
+              just like this one — which can include photos, videos, links,
+              text, hashtags, and mentions like{' '}
               <span className='text-main-accent'>@degendiaries</span>.
             </p>
           </div>

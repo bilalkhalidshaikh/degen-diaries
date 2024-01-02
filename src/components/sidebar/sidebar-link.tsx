@@ -41,7 +41,7 @@ export function SidebarLink({
         >
           <HeroIcon
             className={cn(
-              'h-7 w-7',
+              'h-5 w-5',
               isActive &&
                 ['Explore', 'Lists'].includes(linkName) &&
                 'stroke-white'

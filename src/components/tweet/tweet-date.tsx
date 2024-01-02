@@ -15,8 +15,8 @@ export function TweetDate({
   viewTweet
 }: TweetDateProps): JSX.Element {
   return (
-    <div className={cn('flex gap-1', viewTweet && 'py-4')}>
-      {!viewTweet && <i>·</i>}
+    <div className={cn('flex gap-1 text-light-secondary', viewTweet && 'py-4')}>
+      {/* {!viewTweet && <i>·</i>} */}
       <div className='group relative'>
         <Link href={tweetLink}>
           <a

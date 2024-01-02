@@ -56,10 +56,25 @@ export function Modal({
             aria-hidden='true'
             {...backdrop}
           />
-          <div
+          {/* <div
             className={cn(
               'fixed inset-0 overflow-y-auto p-0', // Set padding to zero
               className ?? 'flex items-start justify-start' // Align to the top left
+            )}
+          >
+            <Dialog.Panel
+              className={modalClassName}
+              as={motion.div}
+              {...(modalAnimation ?? modal)}
+              onClick={closePanelOnClick ? closeModal : undefined}
+            >
+              {children}
+            </Dialog.Panel>
+          </div> */}
+          <div
+            className={cn(
+              'fixed inset-0 overflow-y-auto p-0', // Keep padding to zero
+              className ?? 'flex items-center justify-center' // Center the modal
             )}
           >
             <Dialog.Panel

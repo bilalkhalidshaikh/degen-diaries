@@ -6,6 +6,7 @@ import { preventBubbling } from '@lib/utils';
 import { Modal } from '@components/modal/modal';
 import { ActionModal } from '@components/modal/action-modal';
 import { Button } from '@components/ui/button';
+import { useState } from 'react';
 
 type FollowButtonProps = {
   userTargetId: string;
@@ -18,16 +19,30 @@ export function FollowButton({
 }: FollowButtonProps): JSX.Element | null {
   const { user } = useAuth();
   const { open, openModal, closeModal } = useModal();
+  const [isFollowing, setIsFollowing] = useState(
+    user?.following?.includes(userTargetId)
+  );
 
   if (user?.id === userTargetId) return null;
 
   const { id: userId, following } = user ?? {};
 
-  const handleFollow = (): Promise<void> =>
-    manageFollow('follow', userId as string, userTargetId);
+  // const handleFollow = (): Promise<void> =>
+  //   manageFollow('follow', userId as string, userTargetId);
+
+  // const handleUnfollow = async (): Promise<void> => {
+  //   await manageFollow('unfollow', userId as string, userTargetId);
+  //   closeModal();
+  // };
+
+  const handleFollow = async (): Promise<void> => {
+    await manageFollow('follow', user?.id, userTargetId);
+    setIsFollowing(true); // Update the following status immediately after following
+  };
 
   const handleUnfollow = async (): Promise<void> => {
-    await manageFollow('unfollow', userId as string, userTargetId);
+    await manageFollow('unfollow', user?.id, userTargetId);
+    setIsFollowing(false); // Update the following status immediately after unfollowing
     closeModal();
   };
 
@@ -42,13 +57,13 @@ export function FollowButton({
       >
         <ActionModal
           title={`Unfollow @${userTargetUsername}?`}
-          description='Their Tweets will no longer show up in your home timeline. You can still view their profile, unless their Tweets are protected.'
+          description='Their Degens will no longer show up in your home timeline. You can still view their profile, unless their Degens are protected.'
           mainBtnLabel='Unfollow'
           action={handleUnfollow}
           closeModal={closeModal}
         />
       </Modal>
-      {userIsFollowed ? (
+      {/* {userIsFollowed ? (
         <Button
           className='dark-bg-tab min-w-[106px] self-start border border-light-line-reply px-4 py-1.5 
                      font-bold hover:border-accent-red hover:bg-accent-red/10 hover:text-accent-red
@@ -63,6 +78,28 @@ export function FollowButton({
                      focus-visible:bg-light-primary/90 active:bg-light-border/75 dark:bg-light-border 
                      dark:text-light-primary dark:hover:bg-light-border/90 dark:focus-visible:bg-light-border/90 
                      dark:active:bg-light-border/75'
+          onClick={preventBubbling(handleFollow)}
+        >
+          Follow
+        </Button>
+      )} */}
+      {isFollowing ? (
+        <Button
+          // ... button props remain the same
+          className='dark-bg-tab min-w-[106px] self-start border border-light-line-reply px-4 py-1.5 
+          font-bold hover:border-accent-red hover:bg-accent-red/10 hover:text-accent-red
+          hover:before:content-["Unfollow"] inner:hover:hidden dark:border-light-secondary'
+          onClick={preventBubbling(openModal)}
+        >
+          <span>Following</span>
+        </Button>
+      ) : (
+        <Button
+          // ... button props remain the same
+          className='self-start border bg-light-primary px-4 py-1.5 font-bold text-white hover:bg-light-primary/90 
+          focus-visible:bg-light-primary/90 active:bg-light-border/75 dark:bg-light-border 
+          dark:text-light-primary dark:hover:bg-light-border/90 dark:focus-visible:bg-light-border/90 
+          dark:active:bg-light-border/75'
           onClick={preventBubbling(handleFollow)}
         >
           Follow

@@ -176,7 +176,7 @@ export default function UserLikes() {
 
   useEffect(() => {
     // You can do something with the balance data here if needed
-    console.log('here is the bal ', balanceData);
+    console.log('here is the balance ', balanceData);
   }, [balanceData]);
 
   if (isLoading) {

@@ -22,9 +22,9 @@ export function HomeLayout({ children }: LayoutProps): JSX.Element {
     <>
       {children}
       <Aside>
-        {/* <AsideTrends /> */}
         <Suggestions />
       </Aside>
+      {/* <AsideTrends /> */}
     </>
   );
 }

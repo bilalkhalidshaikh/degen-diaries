@@ -41,6 +41,11 @@ const navLinks: Readonly<NavLink[]> = [
     // disabled: true
   },
   {
+    href: '/people',
+    linkName: 'Degen Circle',
+    iconName: 'UserGroupIcon'
+  },
+  {
     href: '/chat',
     linkName: 'Messages',
     iconName: 'EnvelopeIcon',
@@ -58,7 +63,7 @@ const navLinks: Readonly<NavLink[]> = [
   //   iconName: 'Bars3BottomLeftIcon',
   //   // disabled: true,
   //   canBeHidden: true
-  // }
+  // },
   // {
   //   href: '/chat',
   //   linkName: 'Chat',
@@ -102,7 +107,7 @@ export function Sidebar(): JSX.Element {
                            focus-visible:bg-accent-blue/10 focus-visible:!ring-accent-blue/80
                            dark:text-twitter-icon dark:hover:bg-dark-primary/10'
               >
-                <CustomIcon className='h-7 w-7' iconName='TwitterIcon' />
+                <CustomIcon className='h-12 w-12' iconName='TwitterIcon' />
               </a>
             </Link>
           </h1>
@@ -116,7 +121,7 @@ export function Sidebar(): JSX.Element {
               linkName='Profile'
               iconName='UserIcon'
             />
-            {!isMobile && <MoreSettings />}
+            {/* {!isMobile && <MoreSettings />} */}
           </nav>
           <Button
             className='accent-tab absolute right-4 -translate-y-[72px] bg-main-accent text-lg font-bold text-white
@@ -128,7 +133,7 @@ export function Sidebar(): JSX.Element {
               className='block h-6 w-6 xl:hidden'
               iconName='AddIcon'
             />
-            <p className='hidden xl:block'>Tweet</p>
+            <p className='hidden xl:block'>Degen</p>
           </Button>
         </section>
         {!isMobile && <SidebarProfile />}
