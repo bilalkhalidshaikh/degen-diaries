@@ -91,7 +91,7 @@ export function UserHeader(): JSX.Element {
               ? `@${user.username}`
               : isInTweetPage
               ? totalTweets
-                ? `${totalTweets} ${`Diaries${isPlural(totalTweets)}`}`
+                ? `${totalTweets} ${`Diarie${isPlural(totalTweets)}`}`
                 : 'No Diary'
               : currentPage === 'media'
               ? totalPhotos
