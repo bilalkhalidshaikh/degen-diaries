@@ -1574,6 +1574,7 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
   const [displayedUsers, setDisplayedUsers] = useState<User[]>([]);
   // State to control the visibility of user list
   const [showUserList, setShowUserList] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   const handleStartChatClick = () => {
     setShowUserList(true);
@@ -2228,7 +2229,6 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
     return () => document.removeEventListener('click', hideActionBar);
   }, []);
 
-  // !showUserList ? null : (
   const BottomBar = () => (
     <BottomNavigation
       showLabels
@@ -2280,7 +2280,6 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
         />
       </Link>
     </BottomNavigation>
-    //  )
   );
   const renderFeatureHeader = () => {
     if (featureHeaderUserId === null) return null;
@@ -2548,6 +2547,17 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
     console.log('Message input changed: ', e.target.value);
     setMessage(e.target.value);
   };
+  // const onEmojiClick = (event, emojiObject) => {
+  //   setMessage((prevInput) => prevInput + emojiObject.emoji);
+  //   setShowEmojiPicker(false);
+  // };
+  const onEmojiClick = (event, emojiObject) => {
+    console.log('emoji', emojiObject, 'event', event);
+    // setMessage((prevInput) => prevInput + emojiObject.emoji);
+    setMessage((prevInput) => prevInput + event?.emoji);
+    setShowEmojiPicker(false);
+  };
+
   return (
     <div style={{ overflowY: 'hidden', backgroundColor: '#121212' }}>
       <SEO title='Chat / Degen Diaries' />
@@ -2739,7 +2749,9 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
                     // borderTop: '1px solid #ddd',
                     zIndex: 10, // Ensure this is above the emoji picker's zIndex
                     boxShadow: '0 1px 2px rgba(0, 0, 0, 0.2)',
-                    overflow: 'scroll'
+                    overflow: 'auto',
+                    height: '350px'
+                    // maxHeight: '350px', // Adjust this value as needed to fit the picker nicely
                   }}
                 >
                   {/* <IconButton 
@@ -2750,8 +2762,29 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
                   {/* <IconButton>
                     <AttachFileIcon style={{ color: '#075E54' }} />
                   </IconButton> */}
+
+                  {showEmojiPicker && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        bottom: '85px', // Increase this value to move the emoji picker higher up
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        zIndex: 1000, // Ensure this is above any other fixed elements
+                        // maxHeight: '250px', // Adjust this value as needed to fit the picker nicely
+                        overflow: 'auto'
+                      }}
+                    >
+                      <EmojiPicker
+                        onEmojiClick={onEmojiClick}
+                        height='25em'
+                        width='23em'
+                      />
+                    </div>
+                  )}
+
                   <TextField
-                    className='w-full rounded-full p-2 text-sm focus:outline-none'
+                    className='w-full rounded-full  p-2 text-sm focus:outline-none'
                     fullWidth
                     type='text'
                     placeholder='Type a message'
@@ -2775,14 +2808,14 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
                       },
                       '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
                         border: 'none'
-                      }
+                      },
+                      bottom: '-120px'
                     }}
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position='start'>
                           <IconButton
-                            // onClick={() => setShowEmojiPicker((val) => !val)}
-                            sx={{ color: '#080F23' }}
+                            onClick={() => setShowEmojiPicker((val) => !val)}
                           >
                             <EmojiEmotionsIcon />
                           </IconButton>
@@ -2808,8 +2841,6 @@ export default function Chat({ chatId }: { chatId: string }): JSX.Element {
               </div>
             )}
             <div className='chat-container'>
-              {/* Conditional rendering for chat list or message view */}
-              {/* // Bottom bar for chat list view */}
               {!showChatBox ? <BottomBar /> : <></>}
             </div>
           </div>
