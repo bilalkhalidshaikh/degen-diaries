@@ -53,13 +53,13 @@ type PinModalData = Record<'title' | 'description' | 'mainBtnLabel', string>;
 
 const pinModalData: Readonly<PinModalData[]> = [
   {
-    title: 'Pin Degen to from profile?',
+    title: 'Pin Diary to from profile?',
     description:
-      'This will appear at the top of your profile and replace any previously pinned Degen.',
+      'This will appear at the top of your profile and replace any previously pinned Diaries.',
     mainBtnLabel: 'Pin'
   },
   {
-    title: 'Unpin Degen from profile?',
+    title: 'Unpin Diary from profile?',
     description:
       'This will no longer appear automatically at the top of your profile.',
     mainBtnLabel: 'Unpin'
@@ -135,7 +135,7 @@ export function TweetActions({
   const handlePin = async (): Promise<void> => {
     await managePinnedTweet(tweetIsPinned ? 'unpin' : 'pin', userId, tweetId);
     toast.success(
-      `Your degen was ${tweetIsPinned ? 'unpinned' : 'pinned'} to your profile`
+      `Your Diary was ${tweetIsPinned ? 'unpinned' : 'pinned'} to your profile`
     );
     pinCloseModal();
   };
@@ -184,7 +184,7 @@ export function TweetActions({
         closeModal={removeCloseModal}
       >
         <ActionModal
-          title='Delete Degen?'
+          title='Delete Diary?'
           description={`This can’t be undone and it will be removed from ${
             isInAdminControl ? `@${username}'s` : 'your'
           } profile, the timeline of any accounts that follow ${

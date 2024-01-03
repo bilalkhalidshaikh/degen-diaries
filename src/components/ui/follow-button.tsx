@@ -57,7 +57,7 @@ export function FollowButton({
       >
         <ActionModal
           title={`Unfollow @${userTargetUsername}?`}
-          description='Their Degens will no longer show up in your home timeline. You can still view their profile, unless their Degens are protected.'
+          description='Their Diaries will no longer show up in your home timeline. You can still view their profile, unless their Diaries are protected.'
           mainBtnLabel='Unfollow'
           action={handleUnfollow}
           closeModal={closeModal}

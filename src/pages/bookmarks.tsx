@@ -99,8 +99,8 @@ export default function Bookmarks(): JSX.Element {
           <Loading className='mt-5' />
         ) : !bookmarksRef ? (
           <StatsEmpty
-            title='Save Degens for later'
-            description='Don’t let the good ones fly away! Bookmark Degens to easily find them again in the future.'
+            title='Save Diaries for later'
+            description='Don’t let the good ones fly away! Bookmark Diaries to easily find them again in the future.'
             imageData={{ src: '/assets/no-bookmarks.png', alt: 'No bookmarks' }}
           />
         ) : (

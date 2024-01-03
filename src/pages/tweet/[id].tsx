@@ -63,8 +63,8 @@ export default function TweetId(): JSX.Element {
           <Loading className='mt-5' />
         ) : !tweetData ? (
           <>
-            <SEO title='Degen not found / Degen Diaries' />
-            <Error message='Degen not found' />
+            <SEO title='Diary not found / Degen Diaries' />
+            <Error message='Diary not found' />
           </>
         ) : (
           <>

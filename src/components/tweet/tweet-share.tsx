@@ -38,13 +38,13 @@ export function TweetShare({
         type === 'bookmark'
           ? (): JSX.Element => (
               <span className='flex gap-2'>
-                Degen added to your Bookmarks
+                Diary added to your Bookmarks
                 <Link href='/bookmarks'>
                   <a className='custom-underline font-bold'>View</a>
                 </Link>
               </span>
             )
-          : 'Degen removed from your bookmarks'
+          : 'Diary removed from your bookmarks'
       );
     };
 
@@ -93,7 +93,7 @@ export function TweetShare({
                   onClick={preventBubbling(handleCopy(close))}
                 >
                   <HeroIcon iconName='LinkIcon' />
-                  Copy link to Degen
+                  Copy link to Diary
                 </Popover.Button>
                 {!tweetIsBookmarked ? (
                   <Popover.Button
@@ -115,7 +115,7 @@ export function TweetShare({
                     )}
                   >
                     <HeroIcon iconName='BookmarkSlashIcon' />
-                    Remove Degen from Bookmarks
+                    Remove Diary from Bookmarks
                   </Popover.Button>
                 )}
               </Popover.Panel>

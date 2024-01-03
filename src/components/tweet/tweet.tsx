@@ -245,14 +245,14 @@ export function Tweet(tweet: TweetProps): JSX.Element {
             <AnimatePresence initial={false}>
               {modal ? null : pinned ? (
                 <TweetStatus type='pin'>
-                  <p className='text-sm font-bold'>Pinned Degen</p>
+                  <p className='text-sm font-bold'>Pinned Diaries</p>
                 </TweetStatus>
               ) : (
                 tweetIsRetweeted && (
                   <TweetStatus type='tweet'>
                     <Link href={profileUsername as string}>
                       <a className='custom-underline truncate text-sm font-bold'>
-                        {userId === profileId ? 'You' : profileName} Redegened
+                        {userId === profileId ? 'You' : profileName} Reposted
                       </a>
                     </Link>
                   </TweetStatus>

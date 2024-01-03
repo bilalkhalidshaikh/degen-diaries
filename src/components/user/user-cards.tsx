@@ -23,15 +23,15 @@ type NoStatsData = Record<CombinedTypes, StatsEmptyProps>;
 
 const allNoStatsData: Readonly<NoStatsData> = {
   retweets: {
-    title: 'Amplify Degens you like',
+    title: 'Amplify Diaries you like',
     imageData: { src: '/assets/no-retweets.png', alt: 'No retweets' },
     description:
-      'Share someone else’s Degen on your timeline by Retweeting it. When you do, it’ll show up here.'
+      'Share someone else’s Diary on your timeline by Retweeting it. When you do, it’ll show up here.'
   },
   likes: {
-    title: 'No Degen Likes yet',
+    title: 'No Diary Likes yet',
     imageData: { src: '/assets/no-likes.png', alt: 'No likes' },
-    description: 'When you like a Degen, it’ll show up here.'
+    description: 'When you like a Diary, it’ll show up here.'
   },
   following: {
     title: 'Be in the know',
@@ -42,7 +42,7 @@ const allNoStatsData: Readonly<NoStatsData> = {
     title: 'Looking for followers?',
     imageData: { src: '/assets/no-followers.png', alt: 'No followers' },
     description:
-      'When someone follows this account, they’ll show up here. Post Degens and interacting with others helps boost followers.'
+      'When someone follows this account, they’ll show up here. Post Diaries and interacting with others helps boost followers.'
   }
 };
 

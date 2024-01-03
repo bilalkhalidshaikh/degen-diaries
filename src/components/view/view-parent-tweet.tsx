@@ -32,7 +32,7 @@ export function ViewParentTweet({
           className='rounded-2xl bg-main-sidebar-background px-1 py-3 pl-4 
                      text-light-secondary dark:text-dark-secondary'
         >
-          This Degen was deleted by the Degen author.{' '}
+          This Diary was deleted by the Diary author.{' '}
           <a
             className='custom-underline text-main-accent'
             href='https://help.twitter.com/rules-and-policies/notices-on-twitter'

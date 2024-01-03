@@ -115,7 +115,7 @@ export function Input({
     toast.success(
       () => (
         <span className='flex gap-2'>
-          Your Degen was sent
+          Your Diary was sent
           <Link href={`/tweet/${tweetId}`}>
             <a className='custom-underline font-bold'>View</a>
           </Link>

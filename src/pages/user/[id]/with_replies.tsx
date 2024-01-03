@@ -41,7 +41,7 @@ export default function UserWithReplies(): JSX.Element {
   return (
     <section>
       <SEO
-        title={`Degens with replies by ${name as string} (@${
+        title={`Diaries with replies by ${name as string} (@${
           username as string
         }) / Twitter`}
       />
@@ -49,8 +49,8 @@ export default function UserWithReplies(): JSX.Element {
         <Loading className='mt-5' />
       ) : !data ? (
         <StatsEmpty
-          title={`@${username as string} hasn't post any degen`}
-          description='When they do, their Degens will show up here.'
+          title={`@${username as string} hasn't post any Diary`}
+          description='When they do, their Diaries will show up here.'
         />
       ) : (
         <AnimatePresence mode='popLayout'>

@@ -118,7 +118,7 @@ export function InputForm({
         closeModal={closeModal}
       >
         <ActionModal
-          title='Discard Degen?'
+          title='Discard Diary?'
           description='This can’t be undone and you’ll lose your draft.'
           mainBtnClassName='bg-accent-red hover:bg-accent-red/90 active:bg-accent-red/75'
           mainBtnLabel='Discard'

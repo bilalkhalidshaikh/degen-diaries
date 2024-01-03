@@ -22,7 +22,7 @@ export function TweetStatsModal({
         iconName='XMarkIcon'
         className='absolute flex w-full items-center gap-6 rounded-tl-2xl'
         // title={`${statsType === 'likes' ? 'Liked' : 'Retweeted'} by`}
-        title={`${statsType === 'likes' ? 'Liked' : 'Redegened'} by`}
+        title={`${statsType === 'likes' ? 'Liked' : 'Reposted'} by`}
         action={handleClose}
       />
       {children}
